@@ -1,5 +1,7 @@
-(defsystem #:ctx-utils
-    :description "A basic utility library."
-    :depends-on ("fare-memoization")
+(defsystem #:ctx-utils-test
+    :description "Test library for ctx-utils library."
+    :depends-on ("parachute")
+    :serial t
     :components ((:file "package")
-		 (:file "functions")))
+		 (:file "functions"))
+    :perform (asdf:test-op (op c) (uiop:symbol-call :parachute :test :ctx.util.test)))
