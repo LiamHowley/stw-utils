@@ -1,5 +1,5 @@
 (defpackage ctx.util.test
-  (:use :cl :parachute))
+  (:use :cl :parachute :ctx.util))
 
 (in-package ctx.util.test)
 
