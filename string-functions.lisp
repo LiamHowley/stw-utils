@@ -22,7 +22,7 @@
 
 
 (defmethod concat-string ((list list))
-  "returns a simple-array from a list of strings,"
+  "Returns a simple-array from a list."
   (let ((s (make-string-output-stream))
 	(length (length list)))
     (loop for string in list
@@ -37,18 +37,20 @@
 
 
 (defmethod concat-string ((array array))
-  "returns a simple-array from an array of strings,"
-  (let ((s (make-string-output-stream))
-	(length (length array)))
-    (loop for string across array
-       for count from 1
-       for str = (ensure-string string)
-       for remaining = (- length count)
-       when str
-       do (write-string str s)
-       when (> remaining 0)
-       do (write-string " " s))
-    (get-output-stream-string s)))
+  "Ensures array is a string."
+  (if (stringp array)
+      array
+      (let ((s (make-string-output-stream))
+	    (length (length array)))
+	(loop for string across array
+	   for count from 1
+	   for str = (ensure-string string)
+	   for remaining = (- length count)
+	   when str
+	   do (write-string str s)
+	   when (> remaining 0)
+	   do (write-string " " s))
+	(get-output-stream-string s))))
 
 
 
