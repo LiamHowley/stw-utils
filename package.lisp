@@ -10,8 +10,4 @@
 	   :ensure-list
 
 	   :ensure-string
-	   :concat-string
-	   :indent-string
-	   :empty-string/newline-p
-	   :newlinep
-	   :whitespacep))
+	   :concat-string))
