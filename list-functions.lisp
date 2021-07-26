@@ -51,6 +51,7 @@ Returns flattened results."
 (defun map-tree-breadth-first (fn list)
   "Breadth first traversal. Requires a function that takes a single argument. 
 Returns flattened results."
+  (declare (optimize (speed 3) (safety 0)))
   (let ((values)
 	(children))
     (flet ((walk (inner)
