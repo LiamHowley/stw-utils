@@ -1,6 +1,6 @@
-(defpackage ctx.util.test
-  (:use :cl :parachute :ctx.util))
+(defpackage stw.util.test
+  (:use :cl :parachute :stw.util))
 
-(in-package ctx.util.test)
+(in-package stw.util.test)
 
-(define-test ctx-util)
+(define-test stw-util)

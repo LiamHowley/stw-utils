@@ -1,4 +1,4 @@
-(in-package ctx.util.test)
+(in-package stw.util.test)
 
 
 (defvar testlist '(:one (:two (:three (:four (:five :six) :seven) :eight) :nine) :ten))
@@ -6,7 +6,7 @@
 (defvar alist '((:one . 1) (:two . 2) (:one . 1.0) (:three . 3) (:two . "two")))
 
 (define-test tree-processing-functions
-  :parent ctx-util
+  :parent stw-util
   (is equal (flatten testlist)
       '(:one :two :three :four :five :six :seven :eight :nine :ten))
   (is equal (reverse-flatten testlist)
@@ -24,14 +24,14 @@
 
 
 (define-test list-processing-functions
-  :parent ctx-util
+  :parent stw-util
   (is equal (assoc-all :two alist) '((:two . 2) (:two . "two")))
   (is equal (assoc-all 2 alist :key 'cdr) '((:two . 2)))
   (is equal (assoc-all 1 alist :key 'cdr :test #'equalp) '((:one . 1) (:one . 1.0))))
 
 
 (define-test string-functions
-  :parent ctx-util
+  :parent stw-util
   (of-type string (ensure-string "test"))
   (of-type string (ensure-string 1))
   (of-type string (ensure-string #\a))
