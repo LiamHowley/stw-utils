@@ -41,9 +41,11 @@ Returns flattened results."
 		     acc)
 		    ((atom inner)
 		     (let ((result (funcall (the function fn) inner)))
-		       (if result
-			   (cons result acc)
-			   acc)))
+		       (cond ((and result (eq result t))
+			      (cons inner acc))
+			     (result
+			      (cons result acc))
+			     (t acc))))
 		    (t (walk (cdr inner) (walk (car inner) acc))))))
      (walk list nil))))
 
