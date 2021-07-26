@@ -35,13 +35,17 @@
   "Depth first traversal. Requires function that takes a single argument. 
 Returns flattened results."
   (declare (optimize (speed 3) (safety 0)))
-  (labels ((walk (inner acc)
-	     (cond ((null inner)
-		    acc)
-		   ((atom inner)
-		    (cons (funcall fn inner) acc))
-		   (t (walk (car inner) (walk (cdr inner) acc))))))
-    (walk list nil)))
+  (nreverse
+   (labels ((walk (inner acc)
+	      (cond ((null inner)
+		     acc)
+		    ((atom inner)
+		     (let ((result (funcall (the function fn) inner)))
+		       (if result
+			   (cons result acc)
+			   acc)))
+		    (t (walk (cdr inner) (walk (car inner) acc))))))
+     (walk list nil))))
 
 
 (defun map-tree-breadth-first (fn list)
