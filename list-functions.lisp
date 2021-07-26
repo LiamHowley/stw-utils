@@ -53,19 +53,20 @@ Returns flattened results."
 Returns flattened results."
   (declare (optimize (speed 3) (safety 0)))
   (let ((values)
-	(children))
+	(queue))
     (flet ((walk (inner)
 	     (loop for item in inner
 		if (atom item)
 		do (let ((result (funcall (the function fn) item)))
-		     (when result
-		       (push result values)))
-		else collect item into queue
-		finally (setf children (append children queue)))))
+		     (cond ((and result (eq result t))
+			    (push item values))
+			   (result (push result values))))
+		else collect item into children
+		finally (setf queue (append queue children)))))
       (walk list)
       (loop
-	 while children
-	 for child = (pop children)
+	 while queue
+	 for child = (pop queue)
 	 do (walk child)
 	 finally (return (nreverse values))))))
 	 
