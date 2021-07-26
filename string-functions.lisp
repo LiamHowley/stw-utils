@@ -7,7 +7,7 @@
 (defmethod ensure-string ((value string))
   value)
 
-(defmethod ensure-string ((value real))
+(defmethod ensure-string ((value number))
   (write-to-string value))
 
 (defmethod ensure-string ((value character))
