@@ -1,4 +1,4 @@
-(defpackage ctx.util
+(defpackage stw.util
   (:use :cl)
   (:export :flatten
 	   :reverse-flatten
@@ -10,4 +10,8 @@
 	   :ensure-list
 
 	   :ensure-string
-	   :concat-string))
+	   :concat-string
+	   :match-token
+	   :find-all
+	   :split-sequence
+	   :find-and-replace))
