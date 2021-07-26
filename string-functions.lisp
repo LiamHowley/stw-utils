@@ -1,4 +1,4 @@
-(in-package ctx.util)
+(in-package stw.util)
 
 
 (defmethod ensure-string (value)
@@ -20,7 +20,7 @@
   (concat-string value))
 
 
-(defmethod concat-string ((list list))
+(defmethod concat-string ((list list) &optional insert-space)
   "Returns a simple-array from a list."
   (let ((s (make-string-output-stream))
 	(length (length list)))
@@ -30,12 +30,12 @@
        for remaining = (- length count)
        when str
        do (write-string str s)
-       when (> remaining 0)
+       when (and insert-space (> remaining 0))
        do (write-string " " s))
     (get-output-stream-string s)))
 
 
-(defmethod concat-string ((array array))
+(defmethod concat-string ((array array) &optional insert-space)
   "Ensures array is a string."
   (if (stringp array)
       array
