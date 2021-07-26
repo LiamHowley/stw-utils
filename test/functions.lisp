@@ -1,25 +1,29 @@
 (in-package stw.util.test)
 
 
-(defvar testlist '(:one (:two (:three (:four (:five :six) :seven) :eight) :nine) :ten))
+(defvar testlist1 '(:one (:two (:three (:four (:five :six) :seven) :eight) :nine) :ten))
+
+(defvar testlist2 '(1 (2 (4 (8 9) 5 (10 11)) 3 (6 (12 13) 7 (14 15)))))
 
 (defvar alist '((:one . 1) (:two . 2) (:one . 1.0) (:three . 3) (:two . "two")))
 
 (define-test tree-processing-functions
   :parent stw-util
-  (is equal (flatten testlist)
+  (is equal (flatten testlist1)
       '(:one :two :three :four :five :six :seven :eight :nine :ten))
-  (is equal (reverse-flatten testlist)
+  (is equal (reverse-flatten testlist1)
       '(:ten :nine :eight :seven :six :five :four :three :two :one))
-  (is equal (map-tree-depth-first #'symbol-name testlist)
-      '("ONE" "TWO" "THREE" "FOUR" "FIVE" "SIX" "SEVEN" "EIGHT" "NINE" "TEN"))
-  (is equal (map-tree-breadth-first #'symbol-name testlist)
-      '("ONE" "TEN" "TWO" "NINE" "THREE" "EIGHT" "FOUR" "SEVEN" "FIVE" "SIX"))
-  (true (find-in-tree '(:four (:five :six) :seven) testlist))
-  (true (find-in-tree :four testlist))
-  (false (find-in-tree :eleven testlist))
-  (true (find-in-tree '(:four (:five :six) :seven) testlist))
-  (is equal (mappend #'map-tree-depth-first #'list testlist)
+  (is equal (map-tree-depth-first #'oddp testlist2)
+      '(1 9 5 11 3 13 7 15))
+  (is equal (map-tree-breadth-first #'oddp testlist2)
+      '(1 3 5 7 9 11 13 15))
+  (is equal (map-tree-breadth-first #'identity testlist2)
+      '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))
+  (true (find-in-tree '(:four (:five :six) :seven) testlist1))
+  (true (find-in-tree :four testlist1))
+  (false (find-in-tree #\e testlist2))
+  (true (find-in-tree '(:four (:five :six) :seven) testlist1))
+  (is equal (mappend #'map-tree-depth-first #'list testlist1)
       '(:one :two :three :four :five :six :seven :eight :nine :ten)))
 
 
@@ -55,4 +59,3 @@
       '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
   (is equal (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen"))) "L0rem gypsum d0l0r sit amen")
   (is equal (find-all lorem "em" "um" #\i "et") '((3 5) (6 7) (9 11) (19 20) (24 26))))
-
