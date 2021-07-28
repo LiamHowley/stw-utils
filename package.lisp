@@ -9,9 +9,20 @@
 	   :assoc-all
 	   :ensure-list
 
+	   ;; strings
 	   :ensure-string
 	   :concat-string
 	   :match-token
 	   :find-all
 	   :split-sequence
-	   :find-and-replace))
+	   :find-and-replace
+
+	   ;; files/directories/io
+	   :walk-directory
+	   :list-files
+	   :directory-p
+	   :file-p
+	   :rename-files
+	   :sequence-from-file
+	   :sequence-to-file
+	   :alter-file-contents))
