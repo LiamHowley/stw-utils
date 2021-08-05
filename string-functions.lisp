@@ -67,9 +67,7 @@ a token matching \"abc\" would return (7 10)."))
   (match-token (ensure-string token)))
 
 (defmethod match-token ((token function))
-  #'(lambda (seq index)
-      (declare (fixnum index))
-      (funcall token seq index))) 
+  token)
 
 (defmethod match-token ((token character))
   #'(lambda (seq index)
