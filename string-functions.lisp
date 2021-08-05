@@ -79,18 +79,18 @@ a token matching \"abc\" would return (7 10)."))
   (let ((token-length (array-total-size token)))
     (declare (fixnum token-length))
     #'(lambda (seq index)
-	 (declare (fixnum index))
+	(declare (fixnum index))
 	;;(declare (optimize (safety 0) (speed 3)))
 	(when (char-equal (aref seq index) (aref token 0))
 	  (let* ((end (+ index token-length))
 		 (within-bounds (>= (length seq) end)))
 	    (declare (fixnum end))
 	    (when (and within-bounds
-		       (string-equal (make-array token-length
-						 :element-type 'character
-						 :displaced-to seq
-						 :displaced-index-offset index)
-				     token))
+		       (string= (make-array token-length
+					    :element-type 'character
+					    :displaced-to seq
+					    :displaced-index-offset index)
+				token))
 	      (list index end)))))))
 
 (defun match-tokens (&rest tokens)
