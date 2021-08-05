@@ -113,7 +113,8 @@ a token matching \"abc\" would return (7 10)."))
     (map-tree-depth-first
      #'(lambda (index)
 	 (declare (fixnum index))
-	 (unless (eql index last)
+	 (unless (and last
+		      (<= index last))
 	   (prog1
 	       (funcall fn
 			(if last
