@@ -48,19 +48,19 @@ REPLACEMENT-LIST is an alist of (<to-find> . <to-replace>) pairs."
    recursive))
 
 
-(defun sequence-from-file (file)
+(defun sequence-from-file (file &optional (if-does-not-exist :error))
   "Retrieve contents of file and return sequence."
   (with-output-to-string (output)
-    (with-open-file (in file :direction :input) 
+    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist) 
       (let ((buffer (make-array 4096 :element-type (stream-element-type in))))
 	(loop for pos = (read-sequence buffer in)
 	   while (plusp pos)
 	   do (write-sequence buffer output :end pos))))))
 
   
-(defun sequence-to-file (file sequence &optional (if-exists :supersede))
+(defun sequence-to-file (file sequence &optional (if-exists :supersede) (if-does-not-exist :create))
   "Write sequence to file. Defaults to overwrite existing content."
-  (with-open-file (out file :direction :output :if-exists if-exists) 
+  (with-open-file (out file :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist) 
     (let ((seq (make-array (length sequence) :element-type (stream-element-type out))))
       (write-sequence seq out)
       seq)))
