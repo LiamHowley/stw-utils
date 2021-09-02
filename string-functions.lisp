@@ -20,7 +20,7 @@
   (concat-string value))
 
 
-(defmethod concat-string ((list list) &optional insert-space)
+(defmethod concat-string ((list list) &optional insert-space (func #'identity))
   "Returns a simple-array from a list."
   (let ((s (make-string-output-stream))
 	(length (length list)))
@@ -29,13 +29,13 @@
        for str = (ensure-string string)
        for remaining = (- length count)
        when str
-       do (write-string str s)
+       do (write-string (funcall func str) s)
        when (and insert-space (> remaining 0))
        do (write-string " " s))
     (get-output-stream-string s)))
 
 
-(defmethod concat-string ((array array) &optional insert-space)
+(defmethod concat-string ((array array) &optional insert-space (func #'identity))
   "Ensures array is a string."
   (if (stringp array)
       array
@@ -46,7 +46,7 @@
 	   for str = (ensure-string string)
 	   for remaining = (- length count)
 	   when str
-	   do (write-string str s)
+	   do (write-string (funcall func str) s)
 	   when (and insert-space (> remaining 0))
 	   do (write-string " " s))
 	(get-output-stream-string s))))
