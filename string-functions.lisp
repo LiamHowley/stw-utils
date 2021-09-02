@@ -53,9 +53,10 @@
 
 
 (defgeneric match-token (token)
-  (:documentation "match-token accepts a token as argument and returns
+  (:documentation "Match-token accepts a token as argument and returns
 a closure that accepts both a sequence and index, (type fixnum), as arguments 
-and returns list of coordinates associated with matching tokens.
+and returns list of coordinates associated with matching tokens. Uses a naive
+brute force algorithm to facilitate batch searches of multiple tokens.
 
  Token can be string, character, number etc. If a function is passed 
 it must accept a seq and index (type fixnum), as arguments, and return a list 

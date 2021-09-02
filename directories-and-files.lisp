@@ -36,7 +36,7 @@ trailing slash is required or the namestring/pathname will be truncated."
 
 (defun rename-files (directory-name replacement-list &optional recursive)
   "Change the file name of all files in DIRECTORY-NAME.
-REPLACEMENT-LIST is an alist of (<to-find> . <to-replace>) pairs."
+REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
   (walk-directory 
    #'(lambda (file)
        (when (file-p file)
@@ -92,8 +92,17 @@ while #\e returns (4 5)."
   (apply #'find-all (sequence-from-file file) args))
 
 
-(defun alter-file-contents (file replacement-list)
+(defun alter-file-contents (file replacement-list &optional verbose)
   "Change the file contents of FILE. REPLACEMENT-LIST 
-is an alist of (<to-find> . <to-replace>) pairs."
+is an alist of (<to-find> . <replace-with>) pairs."
   (let ((content (sequence-from-file file)))
-    (sequence-to-file file (find-and-replace content replacement-list))))
+    (sequence-to-file file (find-and-replace content replacement-list) verbose)))
+
+
+(defun alter-directory-contents (directory replacement-list &optional verbose)
+  "Change the contents of all files in DIRECTORY. REPLACEMENT-LIST 
+is an alist of (<to-find> . <replace-with>) pairs."
+  (walk-directory #'(lambda (designator)
+		      (when (file-p designator)
+			(alter-file-contents designator replacement-list)))
+		  directory))
