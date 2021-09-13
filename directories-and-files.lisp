@@ -106,3 +106,19 @@ is an alist of (<to-find> . <replace-with>) pairs."
 		      (when (file-p designator)
 			(alter-file-contents designator replacement-list)))
 		  directory))
+
+
+(defun remove-duplicate-lines-from-file (file)
+  "Remove duplicate lines from file"
+  (let ((table (make-hash-table :test #'equal)))
+    (with-open-file (input file)
+      (loop for line = (read-line input nil)
+	 while line
+	 unless (nth-value 1 (gethash line table))
+	 do (setf (gethash line table) nil)))
+    (with-open-file (output file :direction :output :if-exists :supersede)
+      (maphash #'(lambda (key value)
+		   (declare (ignore value))
+		   (write-line key output))
+	       table))))
+			  
