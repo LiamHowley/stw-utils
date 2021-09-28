@@ -53,6 +53,8 @@
 
 
 (defgeneric match-token (token)
+  ;; It might be more efficient to index sequence and match against the index.
+  ;; To be returned to...
   (:documentation "Match-token accepts a token as argument and returns
 a closure that accepts both a sequence and index, (type fixnum), as arguments 
 and returns list of coordinates associated with matching tokens. Uses a naive
@@ -85,7 +87,8 @@ a token matching \"abc\" would return (7 10)."))
 	(when (char-equal (aref seq index) (aref token 0))
 	  (let* ((end (+ index token-length))
 		 (within-bounds (>= (length seq) end)))
-	    (declare (fixnum end))
+	    (declare (fixnum end)
+		     (boolean within-bounds))
 	    (when (and within-bounds
 		       (string= (make-array token-length
 					    :element-type 'character
