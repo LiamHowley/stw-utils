@@ -27,4 +27,7 @@
 	   :sequence-to-file
 	   :alter-file-contents
 	   :alter-directory-contents
-	   :remove-duplicate-lines-from-file))
+	   :concatenate-files
+	   :concatenate-and-remove-duplicates
+	   :remove-duplicate-lines-from-file
+	   :remove-duplicate-lines-from-string))

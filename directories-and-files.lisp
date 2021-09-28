@@ -96,29 +96,74 @@ while #\e returns (4 5)."
   "Change the file contents of FILE. REPLACEMENT-LIST 
 is an alist of (<to-find> . <replace-with>) pairs."
   (let ((content (sequence-from-file file)))
-    (sequence-to-file file (find-and-replace content replacement-list) verbose)))
+    (multiple-value-bind (sequence replaced)
+	(find-and-replace content replacement-list)
+      (when verbose
+	(loop for (item . replacement) in replaced
+	   do (print (format nil "'~a' replaced with '~a' in file '~a'" item replacement file))))
+      (sequence-to-file file sequence))))
 
 
-(defun alter-directory-contents (directory replacement-list &optional verbose)
+(defun alter-directory-contents (directory replacement-list &optional verbose file-type)
   "Change the contents of all files in DIRECTORY. REPLACEMENT-LIST 
 is an alist of (<to-find> . <replace-with>) pairs."
   (walk-directory #'(lambda (designator)
-		      (when (file-p designator)
-			(alter-file-contents designator replacement-list)))
-		  directory))
+		      (when (or (and (file-p designator) (null file-type))
+				(and file-type (string-equal (pathname-type designator) file-type)))
+			(alter-file-contents designator replacement-list verbose)))
+		  directory
+		  t))
+
+
+(defun unique-line-register (input-stream)
+  "Takes input stream and returns a value-less hash table where each line
+is a key."
+  (let ((table (make-hash-table :test #'equal)))
+    (loop for line = (read-line input-stream nil)
+       while line
+       unless (nth-value 1 (gethash line table))
+       do (setf (gethash line table) nil))
+    table))
+
+
+(defun hash-keys-to-output-stream (table output-stream)
+  "Takes hash-table and writes each key to output-stream.
+Returns output-stream"
+  (maphash #'(lambda (key value)
+	       (declare (ignore value))
+	       (write-line key output-stream))
+	   table))
 
 
 (defun remove-duplicate-lines-from-file (file)
   "Remove duplicate lines from file"
-  (let ((table (make-hash-table :test #'equal)))
-    (with-open-file (input file)
-      (loop for line = (read-line input nil)
-	 while line
-	 unless (nth-value 1 (gethash line table))
-	 do (setf (gethash line table) nil)))
+  (let ((table (with-open-file (input file)
+		 (unique-line-register input))))
     (with-open-file (output file :direction :output :if-exists :supersede)
-      (maphash #'(lambda (key value)
-		   (declare (ignore value))
-		   (write-line key output))
-	       table))))
-			  
+      (hash-keys-to-output-stream table output))))
+
+
+(defun remove-duplicate-lines-from-string (seq)
+  "Remove duplicate lines from string"
+  (let ((table (with-input-from-string (stream seq)
+		 (unique-line-register stream)))
+	(stream (make-string-output-stream)))
+    (hash-keys-to-output-stream table stream)
+    (get-output-stream-string stream)))
+	  
+      
+(defun concatenate-files (&rest files)
+  (apply #'concatenate 'string
+	 (loop for file in files
+	    collect (sequence-from-file file))))
+
+(defun concatenate-and-remove-duplicates (directory &optional file-type)
+  "Walk directory, concatenate files (of optional type - string) and remove duplicates"
+  (remove-duplicate-lines-from-string
+   (apply #'concatenate-files
+	  (walk-directory #'(lambda (designator) 
+			      (if file-type
+				  (and (file-p designator)
+				       (string-equal (pathname-type designator) file-type)) 
+				  (file-p designator)))
+			  directory t))))
