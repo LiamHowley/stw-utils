@@ -57,5 +57,12 @@
   (is equal (concat-string '(#\a #\b #\c #\d)) "abcd")
   (is equal (split-sequence lorem #\e "ip" "do" #\l "or" "am")
       '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
-  (is equal (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen"))) "L0rem gypsum d0l0r sit amen")
+
+  (multiple-value-bind (altered-seq result)
+      (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen")))
+    (is equal altered-seq "L0rem gypsum d0l0r sit amen")
+    (is equal
+	(sort result #'string-lessp :key #'car)
+	(sort '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen")) #'string-lessp :key #'car)))
+
   (is equal (find-all lorem "em" "um" #\i "et") '((3 5) (6 7) (9 11) (19 20) (24 26))))

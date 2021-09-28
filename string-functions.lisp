@@ -156,16 +156,21 @@ Returns ordered list of strings, including delimiting tokens."
   "Find and replace multiple characters or strings.
 Requires a sequence and alist of (<to-find> . <to-replace>) pairs.
 Returns an amended copy of the sequence."
-  (declare (inline split-sequence% concat-string))
-  (concat-string
-   (apply #'split-sequence%
-	  #'(lambda (str)
-	      (let ((to-replace (assoc-if
-				 #'(lambda (key)
-				     (equal (ensure-string key) str))
-				 args)))
-		(if to-replace
-		    (ensure-string (cdr to-replace))
-		    str)))
-	  seq
-	  (mapcar #'car args))))
+  (declare (inline split-sequence%))
+  (let ((replaced))
+    (values 
+     (concat-string
+      (apply #'split-sequence%
+	     #'(lambda (str)
+		 (let ((to-replace (assoc-if
+				    #'(lambda (key)
+					(equal (ensure-string key) str))
+				    args)))
+		   (if to-replace
+		       (prog1
+			   (ensure-string (cdr to-replace))
+			 (pushnew to-replace replaced :test #'equal))
+		       str)))
+	     seq
+	     (mapcar #'car args)))
+     replaced)))
