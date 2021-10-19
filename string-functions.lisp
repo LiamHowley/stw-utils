@@ -79,16 +79,7 @@
 	(get-output-stream-string s))))
 
 
-(defgeneric match-token (token)
-  ;; It might be more efficient to index sequence and match against the index.
-  ;; To be returned to...
-  (:documentation "Match-token accepts a token as argument and returns
-a closure that accepts both a sequence and index, (type fixnum), as arguments 
-and returns list of coordinates associated with matching tokens. Uses a naive
-brute force algorithm to facilitate batch searches of multiple tokens.
 
- Token can be string, character, number etc. If a function is passed 
-it must accept a seq and index (type fixnum), as arguments, and return a list 
 (declaim (ftype (function (vector fixnum &optional fixnum) vector) make-displaced-array)
 	 (inline make-displaced-array))
 
@@ -100,44 +91,49 @@ it must accept a seq and index (type fixnum), as arguments, and return a list
 			  :displaced-to (the simple-array array)
 			  :displaced-index-offset (the fixnum start))))
 
+(defgeneric match-token (seq token)
+  (:documentation "Match-token accepts a token and sequence as arguments and 
+returns a closure that accepts both a sequence and index, (type fixnum), as 
+arguments and returns list of coordinates associated with matching tokens. 
+Uses a naive brute force algorithm to facilitate batch searches of multiple tokens.
+
+Token can be string, character, number etc. If a function is passed 
+it must accept an index (type fixnum), as argument, and return a list 
 of matching index and (+ index (length index)), or nil. 
 E.g. With sequence equaling \"abcdefgabcdefg\" and the index 7 being passed,
 a token matching \"abc\" would return (7 10)."))
 
-(defmethod match-token (token)
-  (match-token (ensure-string token)))
+(defmethod match-token (seq token)
+  (declare (optimize (speed 3) (safety 0)))
+  (match-token seq (ensure-string token)))
 
-(defmethod match-token ((token function))
+(defmethod match-token (seq (token function))
+  (declare (ignore seq)
+	   (optimize (speed 3) (safety 0)))
   token)
 
-(defmethod match-token ((token character))
-  #'(lambda (seq index)
-      (declare (fixnum index))
+(defmethod match-token ((seq string) (token character))
+  #'(lambda (index)
+      (declare (fixnum index)
+	       (optimize (speed 3) (safety 0)))
       (when (char= token (aref seq index))
 	(list index (1+ index)))))
 
-(defmethod match-token ((token string))
-  (let ((token-length (array-total-size token)))
+(defmethod match-token ((seq string) (token string))
+  (let ((token-length (array-total-size token))
+	(seq-length (array-total-size seq)))
     (declare (fixnum token-length))
-    #'(lambda (seq index)
-	(declare (fixnum index))
-	;;(declare (optimize (safety 0) (speed 3)))
+    #'(lambda (index)
+	(declare (fixnum index)
+		 (optimize (speed 3) (safety 0)))
 	(when (char-equal (aref seq index) (aref token 0))
 	  (let* ((end (+ index token-length))
-		 (within-bounds (>= (length seq) end)))
+		 (within-bounds (< end (1+ seq-length))))
 	    (declare (fixnum end)
 		     (boolean within-bounds))
 	    (when (and within-bounds
-		       (string= (make-array token-length
-					    :element-type 'character
-					    :displaced-to seq
-					    :displaced-index-offset index)
+		       (string= (make-displaced-array seq index end)
 				token))
-	      (list index end)))))))
-
-(defun match-tokens (&rest tokens)
-  (loop for token in tokens
-     collect (match-token token)))
 
 (defun consume-sequence (matchers seq)
   (let ((seq-length (array-total-size seq))
@@ -168,6 +164,13 @@ a token matching \"abc\" would return (7 10)."))
 	   (array-total-size seq)))))
 
 (defun find-all (seq &rest args)
+(defun match-tokens (seq &rest tokens)
+  (if (eql (length tokens) 1)
+      (match-token seq (car tokens))
+      (loop for token in tokens
+	 collect (match-token seq token))))
+
+	
   "Find location of all instances of character, string tokens,
 or functions. 
 
