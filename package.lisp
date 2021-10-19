@@ -22,6 +22,7 @@
 	   :find-all
 	   :split-sequence
 	   :find-and-replace
+	   :make-displaced-array
 
 	   ;; files/directories/io
 	   :walk-directory

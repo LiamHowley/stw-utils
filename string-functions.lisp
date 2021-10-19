@@ -89,6 +89,17 @@ brute force algorithm to facilitate batch searches of multiple tokens.
 
  Token can be string, character, number etc. If a function is passed 
 it must accept a seq and index (type fixnum), as arguments, and return a list 
+(declaim (ftype (function (vector fixnum &optional fixnum) vector) make-displaced-array)
+	 (inline make-displaced-array))
+
+(defun make-displaced-array (array start &optional (end (length array)))
+  "makes an array of element-type character displaced to ARRAY."
+  (declare (optimize (speed 3) (safety 0)))
+  (the vector (make-array (- (the fixnum end) (the fixnum start))
+			  :element-type 'character
+			  :displaced-to (the simple-array array)
+			  :displaced-index-offset (the fixnum start))))
+
 of matching index and (+ index (length index)), or nil. 
 E.g. With sequence equaling \"abcdefgabcdefg\" and the index 7 being passed,
 a token matching \"abc\" would return (7 10)."))
