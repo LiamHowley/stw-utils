@@ -55,9 +55,19 @@
       (concat-string (make-array 4 :element-type 'string :initial-contents '("this" "is" "a" "string")) t)
       "this is a string")
   (is equal (concat-string '(#\a #\b #\c #\d)) "abcd")
-  (is equal (split-sequence lorem #\e "ip" "do" #\l "or" "am")
-      '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
 
+  ;; split-sequence
+  (is equal (split-sequence lorem '(#\e "ip" "do" #\l "or" "am"))
+      '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
+  (is equal (split-sequence lorem '(#\space) :remove-separators t)
+      '("Lorem" "ipsum" "dolor" "sit" "amet"))
+  (is equal (split-sequence lorem '(#\s) :start 6 :end 10)
+      '("ip" "s" "um"))
+  (is equal (split-sequence lorem '(#\s) :start 6 :end-test #'(lambda (index)
+								(char= (char lorem index) #\m)))
+      '("ip" "s" "um"))
+
+  ;; find-and-replace
   (multiple-value-bind (altered-seq result)
       (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen")))
     (is equal altered-seq "L0rem gypsum d0l0r sit amen")
@@ -65,4 +75,13 @@
 	(sort result #'string-lessp :key #'car)
 	(sort '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen")) #'string-lessp :key #'car)))
 
-  (is equal (find-all lorem "em" "um" #\i "et") '((3 5) (6 7) (9 11) (19 20) (24 26))))
+  (multiple-value-bind (altered-seq result)
+    (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen"))
+		      :end-test #'(lambda (index)
+				    (char= (char lorem index) #\space)))
+    (is equal altered-seq "L0rem ipsum dolor sit amet")
+    (is equal '((#\o . #\0)) result))
+
+  ;; find-all
+  (is equal (find-all lorem '("em" "um" #\i "et")) '((3 5) (6 7) (9 11) (19 20) (24 26))))
+

@@ -91,6 +91,8 @@
 			  :displaced-to (the simple-array array)
 			  :displaced-index-offset (the fixnum start))))
 
+
+
 (defgeneric match-token (seq token)
   (:documentation "Match-token accepts a token and sequence as arguments and 
 returns a closure that accepts both a sequence and index, (type fixnum), as 
@@ -134,36 +136,10 @@ a token matching \"abc\" would return (7 10)."))
 	    (when (and within-bounds
 		       (string= (make-displaced-array seq index end)
 				token))
+	      (values (list index end)
+		      token)))))))
 
-(defun consume-sequence (matchers seq)
-  (let ((seq-length (array-total-size seq))
-	(acc))
-    (loop for index below seq-length
-       do (loop for func in matchers
-	     do (let ((result (funcall func seq index)))
-		  (when result
-		    (push result acc)))))
-    (when acc
-      (nreverse acc))))
-       
-(defun split-sequence% (fn seq &rest args)
-  (let ((last))
-    (map-tree-depth-first
-     #'(lambda (index)
-	 (declare (fixnum index))
-	 (unless (and last
-		      (<= index last))
-	   (prog1
-	       (funcall fn
-			(if last
-			    (subseq seq last index)
-			    (unless (eql index 0)
-			      (subseq seq 0 index))))
-	     (setf last index))))
-     (list (consume-sequence (apply #'match-tokens args) seq)
-	   (array-total-size seq)))))
 
-(defun find-all (seq &rest args)
 (defun match-tokens (seq &rest tokens)
   (if (eql (length tokens) 1)
       (match-token seq (car tokens))
@@ -171,6 +147,89 @@ a token matching \"abc\" would return (7 10)."))
 	 collect (match-token seq token))))
 
 	
+(defun consume-sequence (matchers seq
+			 &key (start 0) (end (length seq)) (end-test (constantly nil))
+			   (map (constantly nil)) any one-only)
+  (loop 
+     for index from start
+     until (or (eql index end)
+	       (and one-only acc)
+	       (funcall end-test index))
+     for acc = (typecase matchers
+		 (function
+		  (funcall matchers index))
+		 (cons
+		  (loop
+		     for func in matchers
+		     for result = (funcall func index)
+		     if (and result any)
+		     do (return result)
+		     else when result 
+		     nconc result)))
+     when acc
+     do (setf acc (funcall map acc))
+     when acc
+     collecting acc into results
+     finally (return (cond (one-only
+			    results)
+			   (t
+			    (values results (1+ index)))))))
+
+
+(defun split-sequence% (fn seq args &key (start 0) (end (1- (length seq))) (end-test (constantly nil))
+				      remove-separators one-only with-bounding-text)
+  (let ((last)
+	(proceed))
+    (declare (boolean proceed))
+    (values
+     (or 
+      (map-tree-depth-first
+       #'(lambda (index)
+	   (declare (fixnum index))
+	   (unless (and last
+			(<= index last))
+	     (cond ((and remove-separators proceed)
+		    (setf proceed nil))
+		   (remove-separators
+		    (setf proceed t))
+		   (t (setf proceed t)))
+	     (prog1
+		 (when proceed
+		   (funcall fn
+			    (if last
+				(subseq seq last index)
+				(unless (eql index start)
+				  (subseq seq start index)))))
+	       (setf last index))))
+       ;; the input
+       (let ((length (length seq))
+	     (split-list (multiple-value-list 
+			  (consume-sequence (apply #'match-tokens seq args)
+					    seq
+					    :start start
+					    :end end
+					    :end-test end-test
+					    :map #'identity
+					    :any t
+					    :one-only one-only))))
+	 ;; to be used when a select range of text
+	 ;; is to be scanned, but the whole sequence
+	 ;; is to be returned.
+	 (when with-bounding-text
+	   (when (> start 0)
+	     (push 0 split-list))
+	   (when (or (< end (1- (length seq)))
+		     (not (null end-test)))
+	     (setf split-list
+		   (list split-list length))))
+	 split-list))
+      seq)
+     last)))
+
+
+(defun find-all (seq args
+		 &rest params
+		 &key (start 0) (end (1- (length seq))) (end-test (constantly nil)) any)
   "Find location of all instances of character, string tokens,
 or functions. 
 
@@ -179,10 +238,13 @@ Any function calls must accept a seq and index,
 and (+ index (length index)), or nil. E.g. Matching \"abc\" in 
 \"abcdefgabc\" returns a list of '((0 3) (7 10)) 
 while #\e returns (4 5)."
-  (declare (inline consume-sequence))
-  (consume-sequence (apply #'match-tokens args) seq))
+  (declare (inline consume-sequence) (ignore start end end-test))
+  (apply #'consume-sequence (apply #'match-tokens seq args) seq :any any :map #'identity params))
 
-(defun split-sequence (seq &rest args)
+
+(defun split-sequence (seq args
+		       &rest params
+		       &key (start 0) (end (1- (length seq))) (end-test (constantly nil)) remove-separators one-only)
   "Split sequence with multiple character, string delimiters or 
 functions. 
 
@@ -193,14 +255,15 @@ and (+ index (length index)), or nil. E.g. Matching \"abc\" in
 while #\e returns (4 5).
 
 Returns ordered list of strings, including delimiting tokens."
-  (declare (inline split-sequence%))
-  (apply #'split-sequence% #'identity seq args))
+  (declare (inline split-sequence%) (ignore start end test remove-separators))
+  (apply #'split-sequence% #'identity seq args params))
 
-(defun find-and-replace (seq args)
+
+(defun find-and-replace (seq args &rest params &key (start 0) (end (1- (length seq))) (end-test (constantly nil)))
   "Find and replace multiple characters or strings.
 Requires a sequence and alist of (<to-find> . <to-replace>) pairs.
 Returns an amended copy of the sequence."
-  (declare (inline split-sequence%))
+  (declare (inline split-sequence%) (ignore start end test))
   (let ((replaced))
     (values 
      (concat-string
@@ -216,5 +279,7 @@ Returns an amended copy of the sequence."
 			 (pushnew to-replace replaced :test #'equal))
 		       str)))
 	     seq
-	     (mapcar #'car args)))
+	     (mapcar #'car args)
+	     :with-bounding-text t
+	     params))
      replaced)))
