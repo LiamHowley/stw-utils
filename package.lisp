@@ -13,6 +13,9 @@
 	   :ensure-list
 
 	   ;; strings
+	   :whitespacep
+	   :newlinep
+	   :empty-string/newline-p
 	   :ensure-string
 	   :concat-string
 	   :match-token

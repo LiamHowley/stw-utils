@@ -1,6 +1,33 @@
 (in-package stw.util)
 
 
+(declaim (ftype (function (string) boolean) empty-string/newline-p)
+	 (inline empty-string/newline-p))
+
+(defun empty-string/newline-p (string)
+  "Test if string is empty"
+  (declare (optimize (speed 3) (safety 0)))
+  (loop for char across (the string string)
+     always (whitespacep char)))
+
+
+(declaim (ftype (function (character) boolean) newlinep whitespacep)
+	 (inline newlinep whitespacep))
+
+(defun newlinep (char)
+  (declare (optimize (speed 3) (safety 0)))
+  (case (the character char)
+    ((#\newline #\linefeed #\return)
+     t)
+    (t nil)))
+
+(defun whitespacep (char)
+  (declare (optimize (speed 3) (safety 0)))
+  (or (char= (the character char) #\space)
+      (char= (the character char) #\tab)
+      (newlinep (the character char))))
+
+
 (defmethod ensure-string (value)
   (format nil "~a" value))
 
