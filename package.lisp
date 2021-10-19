@@ -1,6 +1,9 @@
 (defpackage stw.util
   (:use :cl)
-  (:export :flatten
+  (:export :scase
+
+	   ;; lists
+	   :flatten
 	   :reverse-flatten
 	   :map-tree-depth-first
 	   :map-tree-breadth-first
