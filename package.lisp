@@ -18,6 +18,7 @@
 	   :empty-string/newline-p
 	   :ensure-string
 	   :concat-string
+	   :match-tokens
 	   :match-token
 	   :find-all
 	   :split-sequence
