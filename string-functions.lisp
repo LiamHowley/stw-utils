@@ -148,13 +148,14 @@ a token matching \"abc\" would return (7 10)."))
 
 	
 (defun consume-sequence (matchers seq
-			 &key (start 0) (end (length seq)) (end-test (constantly nil))
+			 &key (start 0) (end (length seq)) end-test
 			   (map (constantly nil)) any one-only)
   (loop 
      for index from start
-     until (or (eql index end)
-	       (and one-only acc)
-	       (funcall end-test index))
+     until (or (and end-test
+		    (funcall end-test (aref seq index)))
+	       (eql index end)
+	       (and one-only acc))
      for acc = (typecase matchers
 		 (function
 		  (funcall matchers index))
@@ -172,12 +173,15 @@ a token matching \"abc\" would return (7 10)."))
      collecting acc into results
      finally (return (cond (one-only
 			    results)
+			  ;; ((or end-test (< end (length seq)))
+			  ;;  (break)
+			  ;;  (values results index))
 			   (t
-			    (values results (1+ index)))))))
+			    (values results index))))))
 
 
-(defun split-sequence% (fn seq args &key (start 0) (end (1- (length seq))) (end-test (constantly nil))
-				      remove-separators one-only with-bounding-text)
+(defun split-sequence% (fn seq args &key (start 0) (end (length seq))
+				      end-test remove-separators one-only with-bounding-text)
   (let ((last)
 	(proceed))
     (declare (boolean proceed))
@@ -229,7 +233,7 @@ a token matching \"abc\" would return (7 10)."))
 
 (defun find-all (seq args
 		 &rest params
-		 &key (start 0) (end (1- (length seq))) (end-test (constantly nil)) any)
+		 &key (start 0) (end (length seq)) end-test any)
   "Find location of all instances of character, string tokens,
 or functions. 
 
@@ -244,7 +248,7 @@ while #\e returns (4 5)."
 
 (defun split-sequence (seq args
 		       &rest params
-		       &key (start 0) (end (1- (length seq))) (end-test (constantly nil)) remove-separators one-only)
+		       &key (start 0) (end (length seq)) end-test remove-separators one-only)
   "Split sequence with multiple character, string delimiters or 
 functions. 
 
@@ -259,7 +263,7 @@ Returns ordered list of strings, including delimiting tokens."
   (apply #'split-sequence% #'identity seq args params))
 
 
-(defun find-and-replace (seq args &rest params &key (start 0) (end (1- (length seq))) (end-test (constantly nil)))
+(defun find-and-replace (seq args &rest params &key (start 0) (end (1- (length seq))) end-test)
   "Find and replace multiple characters or strings.
 Requires a sequence and alist of (<to-find> . <to-replace>) pairs.
 Returns an amended copy of the sequence."

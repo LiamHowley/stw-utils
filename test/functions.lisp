@@ -61,10 +61,10 @@
       '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
   (is equal (split-sequence lorem '(#\space) :remove-separators t)
       '("Lorem" "ipsum" "dolor" "sit" "amet"))
-  (is equal (split-sequence lorem '(#\s) :start 6 :end 10)
+  (is equal (split-sequence lorem '(#\s) :start 6 :end 11)
       '("ip" "s" "um"))
-  (is equal (split-sequence lorem '(#\s) :start 6 :end-test #'(lambda (index)
-								(char= (char lorem index) #\m)))
+  (is equal (split-sequence lorem '(#\s) :start 6 :end-test #'(lambda (char)
+								(char= char #\space)))
       '("ip" "s" "um"))
 
   ;; find-and-replace
@@ -77,8 +77,8 @@
 
   (multiple-value-bind (altered-seq result)
     (find-and-replace lorem '(("ipsum" . "gypsum") (#\o . #\0) ("amet" . "amen"))
-		      :end-test #'(lambda (index)
-				    (char= (char lorem index) #\space)))
+		      :end-test #'(lambda (char)
+				    (char= char #\space)))
     (is equal altered-seq "L0rem ipsum dolor sit amet")
     (is equal '((#\o . #\0)) result))
 
