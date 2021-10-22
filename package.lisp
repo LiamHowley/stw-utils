@@ -2,6 +2,9 @@
   (:use :cl)
   (:export :scase
 
+	   ;; control flow
+	   :xor
+	   
 	   ;; lists
 	   :flatten
 	   :reverse-flatten

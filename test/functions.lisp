@@ -85,3 +85,32 @@
   ;; find-all
   (is equal (find-all lorem '("em" "um" #\i "et")) '((3 5) (6 7) (9 11) (19 20) (24 26))))
 
+
+(defparameter *xor1* :foo)
+(defparameter *xor2* :bar)
+(defparameter *xor3* nil)
+(defparameter *xor4* nil)
+(defparameter *xor5* nil)
+
+(define-test control-flow-functions
+  :parent stw-util
+
+  (multiple-value-bind (result xor)
+      (xor *xor1* *xor2* *xor3*)
+    (is eq result nil)
+    (is eq xor nil))
+
+  (multiple-value-bind (result xor)
+      (xor *xor3* *xor4* *xor5*)
+    (is eq result nil)
+    (is eq xor t))
+
+  (multiple-value-bind (result xor)
+      (xor *xor1* *xor3* *xor4*)
+    (is eq result :foo)
+    (is eq xor t))
+
+  (multiple-value-bind (result xor)
+      (xor *xor3* *xor2* *xor4*)
+    (is eq result :bar)
+    (is eq xor t)))

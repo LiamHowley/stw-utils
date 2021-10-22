@@ -5,5 +5,6 @@
 		 (:file "macro-functions")
 		 (:file "list-functions")
 		 (:file "string-functions")
+		 (:file "control-flow")
 		 (:file "directories-and-files"))
     :in-order-to ((test-op (load-op :stw-utils-test))))

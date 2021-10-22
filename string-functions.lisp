@@ -173,9 +173,6 @@ a token matching \"abc\" would return (7 10)."))
      collecting acc into results
      finally (return (cond (one-only
 			    results)
-			  ;; ((or end-test (< end (length seq)))
-			  ;;  (break)
-			  ;;  (values results index))
 			   (t
 			    (values results index))))))
 
