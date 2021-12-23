@@ -15,13 +15,15 @@ trailing slash is required or the namestring/pathname will be truncated."
   (when (pathname-name designator)
     t))
 
-(defun walk-directory (fn directory-name &optional recursive)
+(defun walk-directory (fn directory-name &optional recursive (ignore-directories '(".git")))
   (let* ((names (list-files directory-name))
 	 (directories)
 	 (files (map-tree-depth-first
-		 #'(lambda (name)
-		     (when (directory-p name)
-		       (push name directories))
+		 #'(lambda (path)
+		     (when (directory-p path)
+		       (let ((directory-name (car (last (pathname-directory path)))))
+			 (unless (member directory-name ignore-directories :test #'string=)
+			   (push name directories))))
 		     (funcall fn name))
 		 names)))
     (if recursive
@@ -56,7 +58,6 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
 	(loop for pos = (read-sequence buffer in)
 	   while (plusp pos)
 	   do (write-sequence buffer output :end pos))))))
-
   
 
 (defun sequence-to-file (file sequence &optional (if-exists :supersede) (if-does-not-exist :create) verbose)
