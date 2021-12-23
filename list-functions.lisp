@@ -50,28 +50,30 @@ Returns flattened results."
      (walk list nil))))
 
 
+
 (defun map-tree-breadth-first (fn list)
   "Breadth first traversal. Requires a function that takes a single argument. 
 Returns flattened results."
   (declare (optimize (speed 3) (safety 0)))
-  (let ((values)
-	(queue))
-    (flet ((walk (inner)
-	     (loop for item in inner
-		if (atom item)
-		do (let ((result (funcall (the function fn) item)))
-		     (cond ((and result (eq result t))
-			    (push item values))
-			   (result (push result values))))
-		else collect item into children
-		finally (setf queue (append queue children)))))
-      (walk list)
-      (loop
-	 while queue
-	 for child = (pop queue)
-	 do (walk child)
-	 finally (return (nreverse values))))))
-	 
+  (let ((values))
+    (with-queue
+      (flet ((walk (inner)
+	       (loop for item in inner
+		  if (atom item)
+		  do (let ((result (funcall (the function fn) item)))
+		       (cond ((and result (eq result t))
+			      (push item values))
+			     (result
+			      (push result values))))
+		  else do (queue :push item))))
+	(walk list)
+	(loop
+	   for child = (queue :pop)
+	   if child
+	   do (walk child)
+	   else do (return (nreverse values)))))))
+
+
 
 (defun find-in-tree (value tree &key (test #'equal))
   "Recursively walks through a TREE testing VALUE against
