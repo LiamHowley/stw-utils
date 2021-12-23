@@ -19,6 +19,22 @@
 	   :queue-append
 	   :queue-empty-p
 	   
+	   ;; trie
+	   :trie
+	   :make-trie
+	   :next-character
+	   :find-word
+	   :find-in-string
+	   :insert-character
+	   :insert-word
+	   :delete-word
+	   :trie-branch
+	   :trie-leaf
+	   :walk-branch
+	   :walk-trie
+	   :walk-leaves
+	   :optimize-edge
+
 	   
 	   ;; lists
 	   :flatten

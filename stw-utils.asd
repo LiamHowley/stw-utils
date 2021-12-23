@@ -5,6 +5,7 @@
 		 (:file "macro-functions")
 		 (:file "queue")
 		 (:file "list-functions")
+		 (:file "trie")
 		 (:file "string-functions")
 		 (:file "control-flow")
 		 (:file "directories-and-files"))
