@@ -1,6 +1,9 @@
 (defpackage stw.util
   (:use :cl)
   (:export :scase
+	   :aif
+	   :awhen
+	   :self
 
 	   ;; control flow
 	   :xor

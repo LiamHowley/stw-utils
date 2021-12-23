@@ -19,3 +19,17 @@
 		     `((string= ,string ,test)
 		       ,@(progn result)))))))
 
+
+(defmacro awhen (condition &body body)
+  "Anaphoric macro: result of condition is bound to self
+and available for capture."
+  `(let ((self ,condition))
+     (when self
+       ,@body)))
+
+(defmacro aif (condition then else)
+  "Anaphoric macro: result of condition is bound to self
+and available for capture."
+  `(let ((self ,condition))
+     (if self ,then ,else)))
+
