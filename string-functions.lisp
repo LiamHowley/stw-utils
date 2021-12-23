@@ -198,70 +198,39 @@ trie to be added."
 			    (values results index))))))
 
 
-(defun split-sequence% (fn seq args &key (start 0) (end (length seq))
-				      end-test remove-separators one-only with-bounding-text)
-  (let ((last)
-	(proceed))
-    (declare (boolean proceed))
-    (values
-     (or 
-      (map-tree-depth-first
-       #'(lambda (index)
-	   (declare (fixnum index))
-	   (unless (and last
-			(<= index last))
-	     (cond ((and remove-separators proceed)
-		    (setf proceed nil))
-		   (remove-separators
-		    (setf proceed t))
-		   (t (setf proceed t)))
-	     (prog1
-		 (when proceed
-		   (funcall fn
-			    (if last
-				(subseq seq last index)
-				(unless (eql index start)
-				  (subseq seq start index)))))
-	       (setf last index))))
-       ;; the input
-       (let ((length (length seq))
-	     (split-list (multiple-value-list 
-			  (consume-sequence (apply #'match-tokens seq args)
-					    seq
-					    :start start
-					    :end end
-					    :end-test end-test
-					    :map #'identity
-					    :any t
-					    :one-only one-only))))
-	 ;; to be used when a select range of text
-	 ;; is to be scanned, but the whole sequence
-	 ;; is to be returned.
-	 (when with-bounding-text
-	   (when (> start 0)
-	     (push 0 split-list))
-	   (when (or (< end (1- (length seq)))
-		     (not (null end-test)))
-	     (setf split-list
-		   (list split-list length))))
-	 split-list))
-      seq)
-     last)))
+(defun split-sequence% (seq args
+			&key
+			  (start 0) (end (length seq)) end-test
+			  remove-separators one-only with-bounding-text
+			  (map-word #'identity)
+			  (map-delimiter #'identity))
+  (let* ((length (length seq))
+	 (last start)
+	 (list))
+    (when (and with-bounding-text (> start 0))
+      (push (subseq seq 0 start) list))
+    (consume-sequence (etypecase args
+			(list (match-tokens seq args))
+			(atom (match-token seq args)))
+		      seq
+		      :start start
+		      :end end
+		      :end-test end-test
+		      :one-only one-only
+		      :map #'(lambda (indices)
+			       (destructuring-bind (start end)
+				   indices
+				 (unless (and last
+					      (<= start last))
+				   (push (funcall (the function map-word) (subseq seq last start)) list)
+				   (unless remove-separators
+				     (push (funcall (the function map-delimiter) (subseq seq start end)) list)))
+				 (setf last end)
+				 (values))))
+    (when (and with-bounding-text (< last length))
+      (push (subseq seq last length) list))
+    (nreverse list)))
 
-
-(defun find-all (seq args
-		 &rest params
-		 &key (start 0) (end (length seq)) end-test any)
-  "Find location of all instances of character, string tokens,
-or functions. 
-
-Any function calls must accept a seq and index, 
-(type fixnum), as arguments, and return a list of matching index
-and (+ index (length index)), or nil. E.g. Matching \"abc\" in 
-\"abcdefgabc\" returns a list of '((0 3) (7 10)) 
-while #\e returns (4 5)."
-  (declare (inline consume-sequence) (ignore start end end-test))
-  (apply #'consume-sequence (apply #'match-tokens seq args) seq :any any :map #'identity params))
 
 
 (defun split-sequence (seq args
@@ -277,19 +246,44 @@ and (+ index (length index)), or nil. E.g. Matching \"abc\" in
 while #\e returns (4 5).
 
 Returns ordered list of strings, including delimiting tokens."
-  (declare (inline split-sequence%) (ignore start end test remove-separators))
+  (declare (inline split-sequence%)
+	   (ignore start end end-test remove-separators one-only))
   (apply #'split-sequence% #'identity seq args params))
+
+
+(defun find-all (seq args
+		 &rest params
+		 &key (start 0) (end (length seq)) end-test)
+  "Find location of all instances of character, string tokens,
+or functions. 
+
+Any function calls must accept a seq and index, 
+(type fixnum), as arguments, and return a list of matching index
+and (+ index (length index)), or nil. E.g. Matching \"abc\" in 
+\"abcdefgabc\" returns a list of '((0 3) (7 10)) 
+while #\e returns (4 5)."
+  (declare (inline consume-sequence) (ignore start end end-test))
+  (apply #'consume-sequence
+	 (etypecase args
+	   (list (match-tokens seq args))
+	   (atom (match-token seq args)))
+	 seq
+	 :map #'identity
+	 params))
 
 
 (defun find-and-replace (seq args &rest params &key (start 0) (end (1- (length seq))) end-test)
   "Find and replace multiple characters or strings.
 Requires a sequence and alist of (<to-find> . <to-replace>) pairs.
 Returns an amended copy of the sequence."
-  (declare (inline split-sequence%) (ignore start end test))
+  (declare (inline split-sequence%) (ignore start end end-test))
   (let ((replaced))
     (values 
      (concat-string
       (apply #'split-sequence%
+	     seq
+	     (mapcar #'car args)
+	     :map-delimiter 
 	     #'(lambda (str)
 		 (let ((to-replace (assoc-if
 				    #'(lambda (key)
