@@ -4,6 +4,7 @@
 	   :aif
 	   :awhen
 	   :self
+	   :with-gensyms
 
 	   ;; control flow
 	   :xor

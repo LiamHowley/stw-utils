@@ -33,3 +33,9 @@ and available for capture."
   `(let ((self ,condition))
      (if self ,then ,else)))
 
+(defmacro with-gensyms ((&rest bindings) &body body)
+  `(let (,@(loop for binding in bindings
+	      if (consp binding)
+	      collect `(,(car binding) (gensym ,(cadr binding))) else
+	      collect `(,binding (gensym))))
+     ,@body))
