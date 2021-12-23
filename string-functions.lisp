@@ -143,33 +143,51 @@ a token matching \"abc\" would return (7 10)."))
 		      token)))))))
 
 
-(defun match-tokens (seq &rest tokens)
-  (if (eql (length tokens) 1)
-      (match-token seq (car tokens))
+(defun match-tokens (seq &optional tokens (trie (make-trie)))
+  "tokens and trie are both optional to allow for a precompiled
+trie to be added."
+  (let ((characters))
+    (when tokens
       (loop for token in tokens
-	 collect (match-token seq token))))
+	 do (typecase token
+	      (string
+	       (insert-word token trie))
+	      (character
+	       (push token characters)
+	       (insert-key trie token)))))
+    (lambda (index)
+      (let ((result)
+	    (foundp (walk-branch trie)))
+	(loop for i from index below (length seq)
+	   initially (let ((char (aref seq i)))
+		       (when (member char characters :test #'char=)
+			 (setf result char)))
+	   for char = (aref seq i)
+	   for next = (funcall foundp char)
+	   for value = (when next
+			 (trie-leaf next))
+	   unless next
+	   do (return)
+	   when value
+	   do (setf result value))
+	(when result
+	  (values (list index
+			(+ index (etypecase result
+				   (string (length result))
+				   (character 1))))
+		  result))))))
 
-	
+
 (defun consume-sequence (matchers seq
 			 &key (start 0) (end (length seq)) end-test
-			   (map (constantly nil)) any one-only)
+			   (map (constantly nil)) one-only)
   (loop 
      for index from start
      until (or (and end-test
 		    (funcall end-test (aref seq index)))
 	       (eql index end)
 	       (and one-only acc))
-     for acc = (typecase matchers
-		 (function
-		  (funcall matchers index))
-		 (cons
-		  (loop
-		     for func in matchers
-		     for result = (funcall func index)
-		     if (and result any)
-		     do (return result)
-		     else when result 
-		     nconc result)))
+     for acc = (funcall matchers index)
      when acc
      do (setf acc (funcall map acc))
      when acc
