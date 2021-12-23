@@ -47,6 +47,8 @@
   (concat-string value))
 
 
+(declaim (ftype (function ((or list array) &optional boolean (func function)) simple-array) concat-string))
+
 (defmethod concat-string ((list list) &optional insert-space (func #'identity))
   "Returns a simple-array from a list."
   (let ((s (make-string-output-stream))
@@ -60,7 +62,6 @@
        when (and insert-space (> remaining 0))
        do (write-string " " s))
     (get-output-stream-string s)))
-
 
 (defmethod concat-string ((array array) &optional insert-space (func #'identity))
   "Ensures array is a string."
@@ -80,13 +81,13 @@
 
 
 
-(declaim (ftype (function (vector fixnum &optional fixnum) vector) make-displaced-array)
+(declaim (ftype (function (string fixnum &optional fixnum) string) make-displaced-array)
 	 (inline make-displaced-array))
 
 (defun make-displaced-array (array start &optional (end (length array)))
   "makes an array of element-type character displaced to ARRAY."
   (declare (optimize (speed 3) (safety 0)))
-  (the vector (make-array (- (the fixnum end) (the fixnum start))
+  (the string (make-array (- (the fixnum end) (the fixnum start))
 			  :element-type 'character
 			  :displaced-to (the simple-array array)
 			  :displaced-index-offset (the fixnum start))))
