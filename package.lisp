@@ -8,6 +8,17 @@
 
 	   ;; control flow
 	   :xor
+
+	   ;; queue
+	   :queue
+	   :with-queue
+	   :enqueue
+	   :dequeue
+	   :next-in-queue
+	   :queue-contents
+	   :queue-append
+	   :queue-empty-p
+	   
 	   
 	   ;; lists
 	   :flatten

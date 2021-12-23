@@ -3,6 +3,7 @@
     :serial t
     :components ((:file "package")
 		 (:file "macro-functions")
+		 (:file "queue")
 		 (:file "list-functions")
 		 (:file "string-functions")
 		 (:file "control-flow")
