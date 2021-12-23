@@ -3,9 +3,19 @@
 (defmacro scase (string &rest tests)
   "case for strings"
   `(cond  
-     ,@(loop for (test result) in tests
+     ,@(loop for option in tests
+	  for test = (car option)
+	  for result = (cdr option)
 	  if (eq test 't)
-	  collect `(t ,result)
+	  collect `(t ,@(progn result))
 	  else
-	  collect `((string= ,string ,test)
-		    ,result))))
+	  collect (typecase test
+		    (cons
+		     `((or
+			,@(loop for test% in test
+			     collect `(string= ,string ,test%)))
+		       ,@(progn result)))
+		    (atom
+		     `((string= ,string ,test)
+		       ,@(progn result)))))))
+
