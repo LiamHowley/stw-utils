@@ -23,8 +23,8 @@ trailing slash is required or the namestring/pathname will be truncated."
 		     (when (directory-p path)
 		       (let ((directory-name (car (last (pathname-directory path)))))
 			 (unless (member directory-name ignore-directories :test #'string=)
-			   (push name directories))))
-		     (funcall fn name))
+			   (push path directories))))
+		     (funcall fn path))
 		 names)))
     (if recursive
 	(append
