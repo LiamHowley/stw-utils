@@ -27,29 +27,33 @@
     (walk list nil)))
 
 
-(declaim (ftype (function (function list) list)
-		map-tree-depth-first
-		map-tree-breadth-first))
+(declaim (ftype (function (function list &optional boolean) list) map-tree-depth-first))
 
-(defun map-tree-depth-first (fn list)
+(defun map-tree-depth-first (fn list &optional from-end)
   "Depth first traversal. Requires function that takes a single argument. 
 Returns flattened results."
   (declare (optimize (speed 3) (safety 0)))
-  (nreverse
-   (labels ((walk (inner acc)
-	      (cond ((null inner)
-		     acc)
-		    ((atom inner)
-		     (let ((result (funcall (the function fn) inner)))
-		       (cond ((and result (eq result t))
-			      (cons inner acc))
-			     (result
-			      (cons result acc))
-			     (t acc))))
-		    (t (walk (cdr inner) (walk (car inner) acc))))))
-     (walk list nil))))
+  (let ((result
+	  (labels ((walk (inner acc)
+		     (cond ((null inner)
+			    acc)
+			   ((atom inner)
+			    (let ((result (funcall (the function fn) inner)))
+			      (cond ((and result (eq result t))
+				     (cons inner acc))
+				    (result
+				     (cons result acc))
+				    (t acc))))
+			   (t (if from-end
+				  (walk (car inner) (walk (cdr inner) acc))
+				  (walk (cdr inner) (walk (car inner) acc)))))))
+	    (walk list nil))))
+    (if from-end
+	result
+	(nreverse result))))
 
 
+(declaim (ftype (function (function list) list) map-tree-breadth-first))
 
 (defun map-tree-breadth-first (fn list)
   "Breadth first traversal. Requires a function that takes a single argument. 
