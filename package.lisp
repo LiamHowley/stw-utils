@@ -56,7 +56,8 @@
 	   :match-tokens
 	   :match-token
 	   :find-all
-	   :split-sequence
+	   :explode-string
+	   :map-exploding-string
 	   :find-and-replace
 	   :make-displaced-array
 

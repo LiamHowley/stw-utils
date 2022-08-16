@@ -190,36 +190,44 @@ trie to be added."
 
 
 (defun map-exploding-string (seq args
-			&key
-			  (start 0) (end (length seq)) end-test
-			  remove-separators one-only with-bounding-text
-			  (map-word #'identity)
-			  (map-delimiter #'identity))
+			     &key
+			       (start 0) (end (length seq)) end-test
+			       remove-separators one-only with-bounding-text
+			       (map-word #'identity)
+			       (map-delimiter #'identity))
   (let* ((length (length seq))
 	 (last start)
-	 (list))
+	 (list)
+	 (outer-bound (or end length)))
     (when (and with-bounding-text (> start 0))
       (push (subseq seq 0 start) list))
-    (consume-sequence (etypecase args
-			(list (match-tokens seq args))
-			(atom (match-token seq args)))
-		      seq
-		      :start start
-		      :end end
-		      :end-test end-test
-		      :one-only one-only
-		      :map #'(lambda (indices)
-			       (destructuring-bind (start end)
-				   indices
-				 (unless (and last
-					      (<= start last))
-				   (push (funcall (the function map-word) (subseq seq last start)) list)
-				   (unless remove-separators
-				     (push (funcall (the function map-delimiter) (subseq seq start end)) list)))
-				 (setf last end)
-				 (values))))
-    (when (or with-bounding-text (< last length))
-      (push (subseq seq last length) list))
+    (multiple-value-bind (results index)
+	(consume-sequence (etypecase args
+			    (list (match-tokens seq args))
+			    (atom (match-token seq args)))
+			  seq
+			  :start start
+			  :end end
+			  :end-test end-test
+			  :one-only one-only
+			  :map #'(lambda (indices)
+				   (destructuring-bind (start end%)
+				       indices
+				     (unless (and last
+						  (<= start last))
+				       (push (funcall (the function map-word) (subseq seq last start)) list))
+				     (unless remove-separators
+				       (push (funcall (the function map-delimiter) (subseq seq start end%)) list))
+				     (setf last end%)
+				     (when (> end% outer-bound)
+				       (setf outer-bound end%)))
+				   (values)))
+      (declare (ignore results))
+      (when (and index end-test)
+	(unless with-bounding-text
+	  (setf outer-bound index)))
+      (when (or with-bounding-text (< last outer-bound))
+	(push (subseq seq last outer-bound) list)))
     (nreverse list)))
 
 

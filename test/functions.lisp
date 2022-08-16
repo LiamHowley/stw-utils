@@ -56,16 +56,16 @@
       "this is a string")
   (is equal (concat-string '(#\a #\b #\c #\d)) "abcd")
 
-  ;; split-sequence
-  (is equal (split-sequence lorem '(#\e "ip" "do" #\l "or" "am"))
-      '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t"))
-  (is equal (split-sequence lorem '(#\space) :remove-separators t)
-      '("Lorem" "ipsum" "dolor" "sit" "amet"))
-  (is equal (split-sequence lorem '(#\s) :start 6 :end 11)
-      '("ip" "s" "um"))
-  (is equal (split-sequence lorem '(#\s) :start 6 :end-test #'(lambda (char)
-								(char= char #\space)))
-      '("ip" "s" "um"))
+  ;; explode-string
+  (is equal '("L" "or" "e" "m " "ip" "sum " "do" "l" "or" " sit " "am" "e" "t")
+      (explode-string lorem '(#\e "ip" "do" #\l "or" "am")))
+  (is equal '("Lorem" "ipsum" "dolor" "sit" "amet")
+      (explode-string lorem '(#\space) :remove-separators t))
+  (is equal '("ip" "s" "um")
+      (explode-string lorem '(#\s) :start 6 :end 11))
+  (is equal '("ip" "s" "um")
+      (explode-string lorem '(#\s) :start 6 :end-test #'(lambda (char)
+								(char= char #\space))))
 
   ;; find-and-replace
   (multiple-value-bind (altered-seq result)
