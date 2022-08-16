@@ -198,7 +198,7 @@ trie to be added."
 			    (values results index))))))
 
 
-(defun split-sequence% (seq args
+(defun map-exploding-string (seq args
 			&key
 			  (start 0) (end (length seq)) end-test
 			  remove-separators one-only with-bounding-text
@@ -227,13 +227,13 @@ trie to be added."
 				     (push (funcall (the function map-delimiter) (subseq seq start end)) list)))
 				 (setf last end)
 				 (values))))
-    (when (and with-bounding-text (< last length))
+    (when (or with-bounding-text (< last length))
       (push (subseq seq last length) list))
     (nreverse list)))
 
 
 
-(defun split-sequence (seq args
+(defun explode-string (seq args
 		       &rest params
 		       &key (start 0) (end (length seq)) end-test remove-separators one-only)
   "Split sequence with multiple character, string delimiters or 
@@ -246,9 +246,9 @@ and (+ index (length index)), or nil. E.g. Matching \"abc\" in
 while #\e returns (4 5).
 
 Returns ordered list of strings, including delimiting tokens."
-  (declare (inline split-sequence%)
+  (declare (inline map-exploding-string)
 	   (ignore start end end-test remove-separators one-only))
-  (apply #'split-sequence% #'identity seq args params))
+  (apply #'map-exploding-string seq args params))
 
 
 (defun find-all (seq args
@@ -276,11 +276,11 @@ while #\e returns (4 5)."
   "Find and replace multiple characters or strings.
 Requires a sequence and alist of (<to-find> . <to-replace>) pairs.
 Returns an amended copy of the sequence."
-  (declare (inline split-sequence%) (ignore start end end-test))
+  (declare (inline map-exploding-string) (ignore start end end-test))
   (let ((replaced))
     (values 
      (concat-string
-      (apply #'split-sequence%
+      (apply #'map-exploding-string
 	     seq
 	     (mapcar #'car args)
 	     :map-delimiter 
