@@ -60,25 +60,29 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
 	   do (write-sequence buffer output :end pos))))))
   
 
-(defun sequence-to-file (file sequence &optional (if-exists :supersede) (if-does-not-exist :create) verbose)
+(defun file-exists-p (file if-exists if-does-not-exist)
+  (typecase file
+    (pathname (case if-exists
+		(:supersede
+		 (print (format nil "replacing file: ~a" file)))
+		(:append
+		 (print (format nil "appending to file: ~a" file)))
+		(:overwrite
+		 (print (format nil "overwriting file: ~a" file)))))
+    (t (when (eq if-does-not-exist :create)
+	 (print (format nil "creating file: ~a" file))))))
+
+
+(defun sequence-to-file (file sequence
+			 &optional (if-exists :supersede) (if-does-not-exist :create) (element-type 'character) verbose)
   "Write sequence to file. Defaults to overwrite existing content."
   (let ((file-existsp (probe-file file)))
     (with-open-file (out (ensure-directories-exist file :verbose t) :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist) 
       (when verbose
-	(typecase file-existsp
-	  (pathname (case if-exists
-		      (:supersede
-		       (print (format nil "replacing file: ~a" file)))
-		      (:append
-		       (print (format nil "appending to file: ~a" file)))
-		      (:overwrite
-		       (print (format nil "overwriting file: ~a" file)))))
-	  (t (when (eq if-does-not-exist :create)
-	       (print (format nil "creating file: ~a" file))))))
+	(file-exists-p file if-exists if-does-not-exist))
       (write-sequence sequence out))
     (values)))
 
-		
 
 
 (defun find-in-file (file &rest args)
