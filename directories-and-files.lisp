@@ -107,11 +107,16 @@ is an alist of (<to-find> . <replace-with>) pairs."
 
 (defun alter-directory-contents (directory replacement-list &optional verbose file-type)
   "Change the contents of all files in DIRECTORY. REPLACEMENT-LIST 
-is an alist of (<to-find> . <replace-with>) pairs."
+is an alist of (<to-find> . <replace-with>) pairs. 
+Files can be constrained to a type by adding an optional file-type arg."
   (walk-directory #'(lambda (designator)
 		      (when (or (and (file-p designator) (null file-type))
 				(and file-type (string-equal (pathname-type designator) file-type)))
-			(alter-file-contents designator replacement-list verbose)))
+			(let ((file-name (pathname-name designator)))
+			  (unless (or (and (char= (char file-name 0) #\.)
+					   (char= (char file-name 1) #\#))
+				      (char= (char file-name 0) #\#))
+			    (alter-file-contents designator replacement-list verbose)))))
 		  directory
 		  t))
 
