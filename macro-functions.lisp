@@ -33,6 +33,15 @@ and available for capture."
   `(let ((self ,condition))
      (if self ,then ,else)))
 
+(defmacro awhile (condition &body body)
+  "Anaphoric macro: while condition is true the result of
+condition is bound to self, and available for capture."
+  `(loop
+      with self = nil
+      while (setf self ,condition)
+      do (progn
+	   ,@body)))
+
 (defmacro with-gensyms ((&rest bindings) &body body)
   `(let (,@(loop for binding in bindings
 	      if (consp binding)

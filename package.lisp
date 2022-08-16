@@ -1,6 +1,7 @@
 (defpackage stw.util
   (:use :cl)
   (:export :scase
+	   :awhile
 	   :aif
 	   :awhen
 	   :self
