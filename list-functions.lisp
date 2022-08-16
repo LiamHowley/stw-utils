@@ -119,3 +119,37 @@ Maps each leaf with mapping function and appends the results."
   "Return list of item."
   (declare (optimize (speed 3) (safety 0)))
   (if (listp item) item (list item)))
+
+
+(defun ordered-plist-values (plist &rest ordered-keys)
+  "Returns list ordered according to ordered-keys."
+  (loop
+     for key in ordered-keys
+     for value = (getf plist key)
+     when value
+     collect value))
+
+
+(defun number-range (min max)
+  "Returns list of numbers between min and max."
+  (loop for num from min to max
+	collect num))
+
+
+(defun set-difference% (list1 list2 &key (test #'eql))
+  "Set-difference for basic lists that returns the first
+list and maintains its order."
+  (loop
+    for item in list1
+    unless (member item list2 :test test)
+      collect item))
+
+
+(defun array-to-list (array)
+  (map 'list
+       #'(lambda (item)
+	   (typecase item
+	     ((array cons)
+	      (array-to-list item))
+	     (t item)))
+       array))
