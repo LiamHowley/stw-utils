@@ -28,53 +28,44 @@
       (newlinep (the character char))))
 
 
-(defmethod ensure-string (value)
-  (format nil "~a" value))
+(defmethod ensure-string (value &optional stream)
+  (format stream "~a" value))
 
-(defmethod ensure-string ((value string))
-  value)
+(defmethod ensure-string ((value cons) &optional stream)
+  (format stream "~{~a~^ ~}" value))
 
-(defmethod ensure-string ((value number))
-  (write-to-string value))
-
-(defmethod ensure-string ((value character))
-  (string value))
-
-(defmethod ensure-string ((value cons))
-  (concat-string value))
-
-(defmethod ensure-string ((value array))
-  (concat-string value))
+(defmethod ensure-string ((value array) &optional stream)
+  (format stream "~a" (concat-string value)))
 
 
-(declaim (ftype (function ((or list array) &optional boolean (func function)) simple-array) concat-string))
+(declaim (ftype (function ((or list array) &optional boolean) simple-array) concat-string))
 
-(defmethod concat-string ((list list) &optional insert-space (func #'identity))
+(defmethod concat-string ((list list) &optional insert-space)
   "Returns a simple-array from a list."
+  (declare (optimize (speed 3) (safety 0)))
   (let ((s (make-string-output-stream))
 	(length (length list)))
-    (loop for string in list
-       for count from 1
-       for str = (ensure-string string)
-       for remaining = (- length count)
-       when str
-       do (write-string (funcall func str) s)
+    (declare (stream s) (fixnum length))
+    (loop for item in list
+       for count of-type fixnum from 1
+       for remaining = (the fixnum (- length count))
+       do (ensure-string item s)
        when (and insert-space (> remaining 0))
        do (write-string " " s))
     (get-output-stream-string s)))
 
-(defmethod concat-string ((array array) &optional insert-space (func #'identity))
+(defmethod concat-string ((array array) &optional insert-space)
   "Ensures array is a string."
+  (declare (optimize (speed 3) (safety 0)))
   (if (stringp array)
       array
       (let ((s (make-string-output-stream))
 	    (length (length array)))
-	(loop for string across array
-	   for count from 1
-	   for str = (ensure-string string)
-	   for remaining = (- length count)
-	   when str
-	   do (write-string (funcall func str) s)
+	(declare (stream s) (fixnum length))
+	(loop for item across array
+	   for count of-type fixnum from 1
+	   for remaining = (the fixnum (- length count))
+	   do (ensure-string item s)
 	   when (and insert-space (> remaining 0))
 	   do (write-string " " s))
 	(get-output-stream-string s))))
@@ -294,8 +285,6 @@ Returns an amended copy of the sequence."
 			   (ensure-string (cdr to-replace))
 			 (pushnew to-replace replaced :test #'equal))
 		       str)))
-	     seq
-	     (mapcar #'car args)
 	     :with-bounding-text t
 	     params))
      replaced)))
