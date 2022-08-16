@@ -73,5 +73,3 @@
 	   :concatenate-and-remove-duplicates
 	   :remove-duplicate-lines-from-file
 	   :remove-duplicate-lines-from-string))
-	   ;; conditions and restarts
-	   :with-user-input))
