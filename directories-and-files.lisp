@@ -1,13 +1,14 @@
 (in-package stw.util)
 
 
-(defun list-files (directory-name &key (name :wild) (type :wild))
+(defun list-files (directory-name &key (name :wild) (type :wild) resolve-symlinks)
   "Lists files in a directory. Note: PATHNAME-DIRECTORY is used to
 ensure that directory-name references a directory. As such the 
 trailing slash is required or the namestring/pathname will be truncated." 
-  (directory (make-pathname :name name :type type :directory (pathname-directory directory-name))))
+  (directory (make-pathname :name name :type type :directory (pathname-directory directory-name))
+	     :resolve-symlinks resolve-symlinks))
   
-(defun directory-p (designator)
+(defun directoryp (designator)
   (unless (pathname-name designator)
     t))
 
