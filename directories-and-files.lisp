@@ -17,24 +17,22 @@ trailing slash is required or the namestring/pathname will be truncated."
     t))
 
 (defun walk-directory (fn directory-name &optional recursive (ignore-directories '(".git")))
-  (let* ((names (list-files directory-name))
-	 (directories)
-	 (files (map-tree-depth-first
-		 #'(lambda (path)
-		     (when (directory-p path)
-		       (let ((directory-name (car (last (pathname-directory path)))))
-			 (unless (member directory-name ignore-directories :test #'string=)
-			   (push path directories))))
-		     (funcall fn path))
-		 names)))
-    (if recursive
-	(append
-	 files
-	 (mappend #'map-tree-depth-first
-		  #'(lambda (directory-name)
-		      (walk-directory fn directory-name t))
-		  (nreverse directories)))
-	files)))
+  (labels ((walk (name acc)
+	     (cond ((null name)
+		    acc)
+		   ((consp name)
+		    (walk (cdr name) (walk (car name) acc)))
+		   ((and recursive (directoryp name))
+		    (let ((directory-name (car (last (pathname-directory name)))))
+		      (if (member directory-name ignore-directories :test #'string=)
+			  acc
+			  (walk (list-files name) acc))))
+		   ((file-p name)
+		    (aif (funcall fn name)
+			 (cons self acc)
+			 acc)))))
+    (nreverse
+     (walk (list-files directory-name) nil))))
 
 
 (defun rename-files (directory-name replacement-list &optional recursive)
