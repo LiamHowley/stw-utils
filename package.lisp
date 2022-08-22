@@ -69,6 +69,8 @@
 	   :rename-files
 	   :sequence-from-file
 	   :sequence-to-file
+	   :find-in-file
+	   :find-in-directory
 	   :alter-file-contents
 	   :alter-directory-contents
 	   :concatenate-files

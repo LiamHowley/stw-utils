@@ -52,11 +52,11 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
 (defun sequence-from-file (file &optional (if-does-not-exist :error))
   "Retrieve contents of file and return sequence."
   (with-output-to-string (output)
-    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist) 
+    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist :external-format :iso-8859-1) 
       (let ((buffer (make-array 4096 :element-type (stream-element-type in))))
-	(loop for pos = (read-sequence buffer in)
-	   while (plusp pos)
-	   do (write-sequence buffer output :end pos))))))
+	  (loop for pos = (read-sequence buffer in)
+		while (plusp pos)
+		do (write-sequence buffer output :end pos))))))
   
 
 (defun file-exists-p (file if-exists if-does-not-exist)
@@ -76,12 +76,38 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
 			 &optional (if-exists :supersede) (if-does-not-exist :create) (element-type 'character) verbose)
   "Write sequence to file. Defaults to overwrite existing content."
   (let ((file-existsp (probe-file file)))
-    (with-open-file (out (ensure-directories-exist file :verbose t) :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist) 
+    (with-open-file (out (ensure-directories-exist file :verbose t)
+			 :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist) 
       (when verbose
 	(file-exists-p file if-exists if-does-not-exist))
       (write-sequence sequence out))
     (values)))
 
+
+(defun find-in-directory (directory args &optional file-type)
+  "Find file and location of all instances of character,
+string tokens, or functions in DIRECTORY. Recursively
+walks directory, invoking FIND-IN-FILE.
+
+Returns the file name where results are found, along with their
+indexed location."
+  (flet ((walk ()
+	   (let ((file-name (pathname-name file)))
+	     (unless (or (and (char= (char file-name 0) #\.)
+			      (char= (char file-name 1) #\#))
+			 (char= (char file-name 0) #\#))
+	       (awhen (find-in-file file args)
+		 (list file self))))))
+    (walk-directory
+     (lambda (file)
+       (cond ((and file-type (string-equal (pathname-type file) file-type))
+	      (walk))
+	     (file-type
+	      nil)
+	     (t
+	      (walk))))
+     directory
+     t)))
 
 
 (defun find-in-file (file &rest args)
