@@ -105,7 +105,8 @@ and updates the current working trie."
        for char across word
        for next = (funcall foundp char)
        finally (setf (trie-leaf next) value
-		     (trie-word next) word))))
+		     (trie-word next) word))
+    trie))
 
 
 (defun remove-key (trie key &optional (test #'char=))
