@@ -208,7 +208,7 @@ outer leaves."
 	     trie))
 
 
-(defmethod optimize-edge ((trie trie))
+(defmethod compress-edge ((trie trie))
   "Compress edge of trie, when there 
 are no other keys."
   (walk-trie
