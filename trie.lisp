@@ -13,9 +13,9 @@
 
 
 (defstruct trie
-  (word nil)
+  (word nil :type (or null string))
   (leaf nil)
-  (branch nil))
+  (branch nil :type list))
 
 (defmethod print-object ((object trie) stream)
   (print-unreadable-object (object stream :type t :identity t)))
