@@ -6,10 +6,12 @@
 		 insert-key
 		 insert-character
 		 delete-word
+		 remove-key
 		 remove-trie
 		 remove-from-stack
 		 trie-leaf
-		 trie-branch))
+		 trie-branch
+		 trie-word))
 
 
 (defstruct trie
