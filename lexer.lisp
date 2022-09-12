@@ -63,7 +63,7 @@ If none is supplied, *CHAR-INDEX* increments by 1"
 
 
 
-(declaim (ftype (function (function &optional function) function)
+(declaim (ftype (function (function &optional function) (values fixnum fixnum))
 		consume-until
 		consume-while))
 
