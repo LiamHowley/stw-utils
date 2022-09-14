@@ -104,9 +104,8 @@ and last characters read."
 		match-string))
 
 
-(defun match-string (token &optional case-sensitive trie)
-  (let ((trie (or trie (make-trie)))
-	(length (length token)))
+(defun match-string (token &optional case-sensitive (trie (make-trie)))
+  (let ((length (length token)))
     (declare (type trie trie) (fixnum length)
 	     (optimize (speed 3) (safety 0)))
     (insert-word token trie token case-sensitive)
