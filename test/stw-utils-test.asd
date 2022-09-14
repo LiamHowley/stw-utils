@@ -3,5 +3,6 @@
     :depends-on ("stw-utils" "parachute")
     :serial t
     :components ((:file "package")
+		 (:file "lexer")
 		 (:file "functions"))
     :perform (asdf:test-op (op c) (uiop:symbol-call :parachute :test :stw.util.test)))
