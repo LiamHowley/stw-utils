@@ -63,7 +63,7 @@ If none is supplied, *CHAR-INDEX* increments by 1"
 
 
 
-(declaim (ftype (function (function &optional function) (values fixnum fixnum))
+(declaim (ftype (function (function &optional function) function)
 		consume-until
 		consume-while))
 
@@ -72,7 +72,7 @@ If none is supplied, *CHAR-INDEX* increments by 1"
 function that accepts one character. Returns the index of the first
 and last characters read."
   (declare (optimize (safety 0) (speed 3)))
-  (let ((start *char-index*))
+  (lambda (&optional (start *char-index*))
     (declare (fixnum start))
     (loop
       for char = (stw-read-char)
@@ -88,7 +88,7 @@ and last characters read."
 function that accepts one character. Returns the index of the first
 and last characters read."
   (declare (optimize (safety 0) (speed 3)))
-  (let ((start *char-index*))
+  (lambda (&optional (start *char-index*))
     (declare (fixnum start))
     (loop
       for char = (stw-read-char)
