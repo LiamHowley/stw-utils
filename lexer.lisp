@@ -19,6 +19,9 @@
 (defvar *decoder* nil
   "Do not set globally. Decoding function for parsing documents.")
 
+(defvar *encoder* nil
+  "Do not set globally. Encoding function for parsed documents.")
+
 (defvar *consume-whitespace* nil
   "Do not set globally. Function for skipping whitespace in documents.")
 
@@ -188,14 +191,14 @@ as a result."
 
 
 (declaim (ftype (function (&optional function) function)
-		read-and-decode))
+		read-and-decode
+		read-and-encode))
 
 (defun read-and-decode (&optional (predicate (constantly nil)) (decode-char #\&))
   "Reads and decodes *DOCUMENT*, until EOF or PREDICATE. PREDICATE is tested
 against all chars, but those in encoded entities."
   (declare (optimize (safety 0) (speed 3))
-	   (inline make-displaced-array)
-	   (simple-string *document*))
+	   (inline make-displaced-array))
   (let ((reader (read-until #'(lambda (char)
 				(when (or (funcall (the function predicate) char)
 					  (char= char decode-char))
@@ -230,3 +233,49 @@ against all chars, but those in encoded entities."
 			    (return (values (the simple-array (concat-string (nreverse fragments))) char eof)))
 			   (t
 			    (return (values token char eof))))))))))))
+
+
+
+(defmacro with-encoder (string encoder &body body)
+  `(let ((*document* ,string)
+	 (*length* (length ,string))
+	 (*char-index* 0)
+	 (*encoder* ,encoder))
+     ,@body))
+
+
+(defun read-and-encode (&optional (encodep #'(lambda (char)
+					       (if (char= char #\&)
+						   (null (decode *decoder*))
+						   (member char '(#\' #\" #\< #\>))))))
+  "Returns a closure around encoding parameters. The closure in turn calls 
+READ-UNTIL which returns on a special-char. As characters such as #\& can be both
+a character that must be encoded and an encoded character, a fragment stack is used to 
+first verify it is not double encoding before proceeding."
+  (let ((test))
+    #'(lambda (&optional (predicate (constantly nil)))
+	(declare (optimize (safety 0) (speed 3)))
+	(let ((fragments)
+	      (reader (read-until #'(lambda (char)
+				      (when (or (setf test (funcall (the function predicate) char))
+						(funcall (the function encodep) char))
+					*char-index*)))))
+	  (loop
+	    (multiple-value-bind (token char eof)
+		(funcall reader)
+	      ;; catch special chars. #\; is also caught as there may be an
+	      ;; eroneous encoding on the fragments stack.
+	      (cond ((and fragments (or eof test))
+		     (when token
+		       (push token fragments))
+		     (return (values (the simple-array (concat-string (nreverse fragments))) char eof)))
+		    ((and char (or eof test))
+		     ;; no fragments means we've run through without needing encode-char
+		     (return (values token char eof)))
+		    (char
+		     (when token
+		       (push token fragments))
+		     (push (the simple-array (funcall (the function *encoder*) char)) fragments)
+		     (next))
+		    (t
+		     (return (values token char eof))))))))))

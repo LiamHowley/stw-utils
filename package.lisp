@@ -54,7 +54,9 @@
    :*line-number*
    :*length* 
    :*decoder*
+   :*encoder*
    :*consume-whitespace*
+   :with-encoder
    :stw-read-char
    :next
    :stw-peek-next-char
@@ -64,7 +66,9 @@
    :consume-until
    :consume-while
    :read-until
+   :decode
    :read-and-decode
+   :read-and-encode
 
    ;; strings
    :whitespacep
