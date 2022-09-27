@@ -8,3 +8,6 @@
 .#*
 *.#*
 *#*#
+*.tex
+*.pdf
+docs/_minted-README/*
