@@ -1,0 +1,11 @@
+#+LATEX_CLASS: stw-documentation
+#+TITLE: STW-UTILS
+#+AUTHOR: Liam Howley
+
+#+OPTIONS: toc
+
+* Introduction
+
+STW-UTILS is a basic utility library, used by the STW-META, and STW-DB libraries. It contains string functions, a lexer, list functions, and a character trie.
+
+This library is a work in progress. Many functions/features can be found in more stable libraries such as alexandria. It is recommended that they be your first port of call.
