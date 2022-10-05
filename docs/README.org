@@ -4,7 +4,7 @@
 
 #+OPTIONS: toc
 
-* Introduction
+** Introduction
 
 STW-UTILS is a basic utility library, used by the CL-COMP and STW-DB and STW-XML-PARSE libraries. It contains string functions, a lexer, list functions, and a character trie.
 
