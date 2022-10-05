@@ -90,6 +90,7 @@
    :directory-p
    :file-p
    :rename-files
+   :parse-stream
    :sequence-from-file
    :sequence-to-file
    :find-in-file

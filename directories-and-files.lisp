@@ -49,19 +49,24 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
    recursive))
 
 
+(declaim (inline parse-stream))
+
+(defun parse-stream (in out)
+  (let ((buffer (make-array 4096 :element-type (stream-element-type in))))
+    (loop
+      for pos = (read-sequence buffer in)
+      while (plusp pos)
+      do (write-sequence buffer out :end pos))))
+
+
 (defun sequence-from-file (file &optional (if-does-not-exist :error))
   "Retrieve contents of file and return sequence."
-  (with-output-to-string (output)
-    (handler-bind ((sb-int:stream-decoding-error #'(lambda (c)
-						     (declare (ignore c))
-						     (invoke-restart 'sb-int:attempt-resync))))
-      (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1) 
-	(when in
-	  (let ((buffer (make-array 4096 :element-type (stream-element-type in))))
-	    (loop
-	      for pos = (read-sequence buffer in)
-	      while (plusp pos)
-	      do (write-sequence buffer output :end pos))))))))
+  (handler-bind ((sb-int:stream-decoding-error #'(lambda (c)
+						   (declare (ignore c))
+						   (invoke-restart 'sb-int:attempt-resync))))
+    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1) 
+      (with-output-to-string (out)
+	(parse-stream in out)))))
 
 
 (defun file-exists-p (file if-exists if-does-not-exist)
