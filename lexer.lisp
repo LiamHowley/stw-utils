@@ -22,9 +22,6 @@
 (defvar *encoder* nil
   "Do not set globally. Encoding function for parsed documents.")
 
-(defvar *consume-whitespace* nil
-  "Do not set globally. Function for skipping whitespace in documents.")
-
 
 (declaim (inline stw-read-char next)
 	 (ftype (function (&optional fixnum) (or null fixnum))
@@ -66,41 +63,41 @@ If none is supplied, *CHAR-INDEX* increments by 1"
 
 
 
-(declaim (ftype (function (function &optional function) function)
+(declaim (ftype (function (function) function)
 		consume-until
 		consume-while))
 
-(defun consume-while (predicate &optional (parse (constantly nil)))
+(defun consume-while (predicate)
   "Consumes while character/token challenge is met. Predicate is a 
 function that accepts one character. Returns the index of the first
 and last characters read."
-  (declare (optimize (safety 0) (speed 3)))
   (lambda (&optional (start *char-index*))
-    (declare (fixnum start))
+    (declare (fixnum start)
+	     (optimize (safety 0) (speed 3)))
     (loop
       for char = (stw-read-char)
       until (eq char :eof)
       while (funcall predicate char)
-      do (funcall parse char)
       do (next))
     (values start *char-index*)))
 
 
-(defun consume-until (predicate &optional (parse (constantly nil)))
+(defun consume-until (predicate)
   "Consumes until character/token challenge is met. Predicate is a 
 function that accepts one character. Returns the index of the first
 and last characters read."
-  (declare (optimize (safety 0) (speed 3)))
   (lambda (&optional (start *char-index*))
-    (declare (fixnum start))
+    (declare (fixnum start)
+	     (optimize (safety 0) (speed 3)))
     (loop
       for char = (stw-read-char)
       until (or (eq char :eof)
 		(funcall predicate char))
-      do (funcall parse char)
       do (next))
     (values start *char-index*)))
 
+(defvar *consume-whitespace* (consume-while #'whitespacep)
+  "Returns a closure.")
 
 (declaim (inline match-string)
 	 (ftype (function (simple-string &optional boolean trie) function)
