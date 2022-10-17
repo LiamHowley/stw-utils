@@ -1,6 +1,6 @@
 (in-package stw.util)
 
-(declaim (inline find-word%%
+(declaim (inline find-word%
 		 find-key
 		 find-key%
 		 insert-indexed-key
@@ -33,7 +33,7 @@
 	      (values node (1+ pos))))))))
 
 
-(defun find-word%% (word trie &optional (pos 0))
+(defun find-word% (word trie &optional (pos 0))
   (multiple-value-bind (next end-pos)
       (find-key word trie pos)
     (let ((self (and next (radix-trie-leaf next))))
@@ -42,12 +42,12 @@
 	     self)
 	    ((and next end-pos
 		  (< end-pos (length word)))
-	     (find-word%% word next end-pos))
+	     (find-word% word next end-pos))
 	    ((and end-pos (> end-pos 0))
 	     (values nil end-pos))))))
 
 (defmethod find-word (word (trie radix-trie))
-  (find-word%% word trie))
+  (find-word% word trie))
 
 
 ;;;; inserting
