@@ -103,7 +103,7 @@
 (define-test encoding
   :parent stw-util
 (with-encoder
-  "Just <a href=\"/url.com\" target='_blank' class='class colour position'>"
+  "Just <a href=\"/url.com\" target='_blank&#39; class='class colour position'>"
   #'(lambda (char)
       (cdr (assoc char *special-entities* :test #'char=)))
   (let* ((*decoder* (let* ((trie (make-trie)))
