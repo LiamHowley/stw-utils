@@ -93,6 +93,7 @@ and last characters read."
       for char = (stw-read-char)
       until (or (eq char :eof)
 		(funcall predicate char))
+      do (print char)
       do (next))
     (values start *char-index*)))
 
@@ -245,10 +246,17 @@ against all chars, but those in encoded entities."
 					       (if (char= char #\&)
 						   (null (decode *decoder*))
 						   (member char '(#\' #\" #\< #\>))))))
-  "Returns a closure around encoding parameters. The closure in turn calls 
-READ-UNTIL which returns on a special-char. As characters such as #\& can be both
-a character that must be encoded and an encoded character, a fragment stack is used to 
-first verify it is not double encoding before proceeding."
+  "Reads and encodes characters within *DOCUMENT* when the optional predicate ENCODEP returns true. 
+ENCODEP is a predicate of one character whose function is to determine whether to encode or not.
+The default setting for encodep is to assume xml special characters are to be encoded. As xml
+special characters are parsed beginning with the #\& ampersand character, any #\& read is first tested
+with (decoder *DECODER*) to test for an already encoded character. If it is already encoded, it is 
+ignored. As this behaviour occurs within the body of the predicate ENCODEP, it is a trivial matter
+to change this behaviour to require double encoding.
+
+Returning a closure that accepts an optional predicate of one character, the predicate ENCODEP and the
+optional PREDICATE are used as the PREDICATE for the function READ-UNTIL. When called READ-UNTIL, 
+returns a closure designated as a reader, to be called repeatedly throughout the parsing of the text."
   (let ((test))
     #'(lambda (&optional (predicate (constantly nil)))
 	(declare (optimize (safety 0) (speed 3)))
@@ -260,14 +268,13 @@ first verify it is not double encoding before proceeding."
 	  (loop
 	    (multiple-value-bind (token char eof)
 		(funcall reader)
-	      ;; catch special chars. #\; is also caught as there may be an
-	      ;; eroneous encoding on the fragments stack.
+	      ;; catch special chars.
 	      (cond ((and fragments (or eof test))
 		     (when token
 		       (push token fragments))
 		     (return (values (the simple-array (concat-string (nreverse fragments))) char eof)))
 		    ((and char (or eof test))
-		     ;; no fragments means we've run through without needing encode-char
+		     ;; no fragments means we've run through without needing to funcall *ENCODER*
 		     (return (values token char eof)))
 		    (char
 		     (when token
