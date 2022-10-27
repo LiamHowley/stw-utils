@@ -142,8 +142,10 @@ and last characters read."
 (declaim (ftype (function (function) function) read-until))
 
 (defun read-until (predicate)
-  "Read until character/token challenge is met. Predicate is a 
-function that accepts one character. Returns subseq of *document*, 
+  "Creates and returns a reader function that reads until 
+character/token challenge is met and can be invoked as required. 
+Predicate is a function that accepts one character. Each time the
+reader is invoked, it returns a subseq of *DOCUMENT*, 
 the last char read and a boolean indicating EOF"
   #'(lambda (&optional (start *char-index*))
       (declare (optimize (safety 0) (speed 3))
@@ -173,7 +175,7 @@ the last char read and a boolean indicating EOF"
 	 (inline decode))
 
 (defun decode (decoder)
-  "decoder is a function that returns the opening and closing
+  "Decoder is a function that returns the opening and closing
 coordinates of the observed entity, and the decoded character
 as a result."
   (declare (optimize (safety 0) (speed 3)))
@@ -191,7 +193,8 @@ as a result."
 
 (defun read-and-decode (&optional (predicate (constantly nil)) (decode-char #\&))
   "Reads and decodes *DOCUMENT*, until EOF or PREDICATE. PREDICATE is tested
-against all chars, but those in encoded entities."
+against all chars, but those in encoded entities. Returns a reader function 
+to be invoked as required."
   (declare (optimize (safety 0) (speed 3))
 	   (inline make-displaced-array))
   (let ((reader (read-until #'(lambda (char)
@@ -243,7 +246,9 @@ against all chars, but those in encoded entities."
 					       (if (char= char #\&)
 						   (null (decode *decoder*))
 						   (member char '(#\' #\" #\< #\>))))))
-  "Reads and encodes characters within *DOCUMENT* when the optional predicate ENCODEP returns true. 
+  "Returns a closure around the predicate encodep that reads and encodes characters within 
+*DOCUMENT* when the optional ENCODEP returns true. 
+
 ENCODEP is a predicate of one character whose function is to determine whether to encode or not.
 The default setting for encodep is to assume xml special characters are to be encoded. As xml
 special characters are parsed beginning with the #\& ampersand character, any #\& read is first tested
@@ -251,15 +256,14 @@ with (decoder *DECODER*) to test for an already encoded character. If it is alre
 ignored. As this behaviour occurs within the body of the predicate ENCODEP, it is a trivial matter
 to change this behaviour to require double encoding.
 
-Returning a closure that accepts an optional predicate of one character, the predicate ENCODEP and the
-optional PREDICATE are used as the PREDICATE for the function READ-UNTIL. When called READ-UNTIL, 
-returns a closure designated as a reader, to be called repeatedly throughout the parsing of the text."
+Within the returned closure a reader is formed from the return value of READ-UNTIL. This return value
+encapsulates a predicate of either ENCODEP or the predicate return-on-token."
   (let ((test))
-    #'(lambda (&optional (predicate (constantly nil)))
+    #'(lambda (&optional (return-on-token (constantly nil)))
 	(declare (optimize (safety 0) (speed 3)))
 	(let ((fragments)
 	      (reader (read-until #'(lambda (char)
-				      (when (or (setf test (funcall (the function predicate) char))
+				      (when (or (setf test (funcall (the function return-on-token) char))
 						(funcall (the function encodep) char))
 					*char-index*)))))
 	  (loop
