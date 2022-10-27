@@ -3,15 +3,12 @@
 
 (defvar *document*)
 
-(declaim (fixnum *char-index* *line-number* *length*)
+(declaim (fixnum *char-index* *length*)
 	 (simple-string *document*))
 
 
 (defvar *char-index* 0 
   "Do not set globally. Matches the index of next character to be read in the working document.")
-
-(defvar *line-number*  0
-  "Do not set globally. Matches the current line of the working document.")
 
 (defvar *length* 0 
   "Do not set globally. Matches the length of the working document.")
