@@ -206,18 +206,24 @@ Returns output-stream"
     (get-output-stream-string stream)))
 	  
       
-(defun concatenate-files (&rest files)
+(defun concatenate-files% (&rest files)
   (apply #'concatenate 'string
 	 (loop for file in files
 	    collect (sequence-from-file file))))
 
+(defun concatenate-files (directory &optional file-type)
+  "Walk directory and concatenate files (of optional type - string)."
+  (apply #'concatenate-files%
+	 (walk-directory #'(lambda (designator) 
+			     (cond ((and file-type
+					 (file-p designator)
+					 (string-equal (pathname-type designator) file-type))
+				    designator)
+				   ((file-p designator)
+				    (unless file-type
+				      designator))))
+			 directory t)))
+
 (defun concatenate-and-remove-duplicates (directory &optional file-type)
   "Walk directory, concatenate files (of optional type - string) and remove duplicates"
-  (remove-duplicate-lines-from-string
-   (apply #'concatenate-files
-	  (walk-directory #'(lambda (designator) 
-			      (if file-type
-				  (and (file-p designator)
-				       (string-equal (pathname-type designator) file-type)) 
-				  (file-p designator)))
-			  directory t))))
+  (remove-duplicate-lines-from-string (concatenate-files directory file-type)))
