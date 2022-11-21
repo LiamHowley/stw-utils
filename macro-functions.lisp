@@ -1,4 +1,4 @@
-(in-package stw.util)
+(in-package util.macro)
 
 (defmacro scase (string &rest tests)
   "case for strings"

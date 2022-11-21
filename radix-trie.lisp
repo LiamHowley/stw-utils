@@ -1,4 +1,4 @@
-(in-package stw.util)
+(in-package util.trie)
 
 (declaim (inline find-word%
 		 find-key

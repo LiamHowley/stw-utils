@@ -1,4 +1,4 @@
-(in-package stw.util)
+(in-package util.trie)
 
 (declaim (inline next-key
 		 walk-branch

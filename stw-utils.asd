@@ -1,12 +1,13 @@
 (defsystem #:stw-utils
     :description "A basic utility library."
     :serial t
-    :components ((:file "package")
+    :components ((:file "packages")
 		 (:file "macro-functions")
 		 (:file "list-functions")
 		 (:file "binary-functions")
 		 (:file "trie")
 		 (:file "radix-trie")
+		 (:file "byte-trie")
 		 (:file "string-functions")
 		 (:file "lexer")
 		 (:file "control-flow")

@@ -1,5 +1,6 @@
 (defpackage stw.util.test
-  (:use :cl :parachute :stw.util))
+  (:use :cl :parachute :stw.util)
+  (:export :stw-util))
 
 (in-package stw.util.test)
 

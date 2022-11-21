@@ -1,15 +1,14 @@
-(defpackage stw.util
+(defpackage util.macro
   (:use :cl)
+
   (:export
    :scase
    :awhile
    :aif
    :awhen
    :self
-   :with-gensyms
+   :with-gensyms))
 
-   ;; control flow
-   :xor
 
 (defpackage util.binary
   (:use :cl)
@@ -24,6 +23,22 @@
    :octets-to-string))
 
 
+(defpackage util.trie
+  (:use :cl)
+
+  (:import-from
+   :util.binary
+   :lowercasep
+   :get-uppercase
+   :get-lowercase)
+
+  (:import-from
+   :util.macro
+   :aif
+   :awhen
+   :self)
+
+  (:export
 
    ;; trie
    :trie
@@ -33,6 +48,7 @@
    :find-in-string
    :insert-character
    :insert-word
+   :insert-key
    :delete-word
    :trie-branch
    :trie-leaf
@@ -41,12 +57,33 @@
    :walk-leaves
    :compress-edge
 
-   ;;radix-trie
+   ;; radix-trie
    :radix-trie
    :radix-trie-word
    :radix-trie-leaf
    :radix-trie-branch
    :radix-trie-subseq
+   :make-radix-trie
+
+   ;; byte-trie
+   :byte-trie
+   :byte-trie-word
+   :byte-trie-leaf
+   :byte-trie-branch
+   :make-byte-trie))
+
+
+(defpackage stw.util
+  (:use
+   :cl
+   :util.trie
+   :util.binary
+   :util.macro)
+
+  (:export
+
+   ;; control flow
+   :xor
    
    ;; lists
    :flatten
@@ -114,4 +151,54 @@
    :concatenate-files
    :concatenate-and-remove-duplicates
    :remove-duplicate-lines-from-file
-   :remove-duplicate-lines-from-string))
+   :remove-duplicate-lines-from-string)
+
+  (:export
+   :scase
+   :awhile
+   :aif
+   :awhen
+   :self
+   :with-gensyms)
+
+  (:export
+   :whitespacep
+   :uppercasep
+   :lowercasep
+   :get-lowercase
+   :get-uppercase
+   :string-to-octets
+   :octets-to-string)
+
+  (:export
+
+   ;; trie
+   :trie
+   :make-trie
+   :next-character
+   :find-word
+   :find-in-string
+   :insert-character
+   :insert-word
+   :delete-word
+   :trie-branch
+   :trie-leaf
+   :walk-branch
+   :walk-trie
+   :walk-leaves
+   :compress-edge
+
+   ;; radix-trie
+   :radix-trie
+   :radix-trie-word
+   :radix-trie-leaf
+   :radix-trie-branch
+   :radix-trie-subseq
+   :make-radix-trie
+
+   ;; byte-trie
+   :byte-trie
+   :byte-trie-word
+   :byte-trie-leaf
+   :byte-trie-branch
+   :make-byte-trie))
