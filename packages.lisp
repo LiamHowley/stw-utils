@@ -11,6 +11,20 @@
    ;; control flow
    :xor
 
+(defpackage util.binary
+  (:use :cl)
+
+  (:export
+   :whitespacep
+   :uppercasep
+   :lowercasep
+   :get-lowercase
+   :get-uppercase
+   :string-to-octets
+   :octets-to-string))
+
+
+
    ;; trie
    :trie
    :make-trie

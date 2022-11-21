@@ -4,6 +4,7 @@
     :components ((:file "package")
 		 (:file "macro-functions")
 		 (:file "list-functions")
+		 (:file "binary-functions")
 		 (:file "trie")
 		 (:file "radix-trie")
 		 (:file "string-functions")
