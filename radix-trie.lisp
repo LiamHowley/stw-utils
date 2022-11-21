@@ -4,7 +4,6 @@
 		 find-key
 		 find-key%
 		 insert-indexed-key
-		 remove-indexed-key
 		 split-indexed-key
 		 insert-word%
 		 radix-trie-branch
@@ -36,17 +35,19 @@
 (defun find-word% (word trie &optional (pos 0))
   (multiple-value-bind (next end-pos)
       (find-key word trie pos)
-    (let ((self (and next (radix-trie-leaf next))))
-      (cond ((and self
-		  (null (mismatch word self)))
-	     self)
-	    ((and next end-pos
-		  (< end-pos (length word)))
-	     (find-word% word next end-pos))
-	    ((and end-pos (> end-pos 0))
-	     (values nil end-pos))))))
+    (let ((self (when next
+		  (radix-trie-word next))))
+      (cond  ((and self
+		   (null (mismatch word self)))
+	      (values (radix-trie-leaf next) self))
+	     ((and next end-pos
+		   (< end-pos (length word)))
+	      (find-word% word next end-pos))
+	     ((and end-pos (> end-pos 0))
+	      (values nil end-pos))))))
 
-(defmethod find-word (word (trie radix-trie))
+
+(defmethod find-word ((word string) (trie radix-trie))
   (find-word% word trie))
 
 
@@ -69,24 +70,20 @@
   "Insert key into branch of next-trie."
   (setf (gethash (char key 0) (radix-trie-branch trie)) next-trie)
   (when (> (length key) 1)
-    (setf (radix-trie-subseq next-trie) key))
+      (setf (radix-trie-subseq next-trie) key))
   next-trie)
 
-(defun remove-indexed-key (trie key &optional (test #'string=))
-  "Remove key from trie."
-  (let ((trie-branch (radix-trie-branch trie))
-	(char (char key 0)))
-    (awhen (gethash char trie-branch)
-      (when (funcall test (radix-trie-subseq self) key)
-	(remhash (char key 0) trie-branch)))))
 
-(defun split-indexed-key (trie key prefix suffix next)
-  (let ((new-node (make-radix-trie)))
-    (insert-indexed-key trie prefix new-node)
-    (insert-indexed-key new-node suffix next)
-    (remove-indexed-key trie key #'string=)
-    new-node))
-
+(defun split-indexed-key (prefix suffix next)
+  (let ((new-node (copy-structure next)))
+    (setf (radix-trie-subseq new-node) nil
+	  (radix-trie-leaf next) nil
+	  (radix-trie-word next) nil
+	  (radix-trie-branch next) (make-hash-table :test 'eq)
+	  (radix-trie-subseq next) (when (> (length prefix) 1)
+				     prefix))
+    (insert-indexed-key next suffix new-node)
+    next))
 
 (defmethod insert-word% (word (trie radix-trie))
   (let ((wordlength (length word)))
@@ -100,8 +97,7 @@
 			  (insert-word% (subseq word end-pos) next-trie))
 			 ((< end-pos key-length) 
 			  ;; Partial match of key.
-			  (let ((new-node (split-indexed-key cur-trie key
-							     (subseq key 0 end-pos)
+			  (let ((new-node (split-indexed-key (subseq key 0 end-pos)
 							     (subseq key end-pos key-length)
 							     next-trie)))
 			    (if (eql end-pos wordlength)
@@ -122,7 +118,7 @@
 
 
 
-(defmethod insert-word (word (trie radix-trie) &optional (value word) case-sensitive)
+(defmethod insert-word ((word string) (trie radix-trie) &optional (value word) case-sensitive)
   (declare (ignore case-sensitive))
   (awhen (insert-word% word trie)
     (setf (radix-trie-leaf self) value
