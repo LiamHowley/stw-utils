@@ -68,15 +68,15 @@ If none is supplied, *CHAR-INDEX* increments by 1"
   "Consumes while character/token challenge is met. Predicate is a 
 function that accepts one character. Returns the index of the first
 and last characters read."
-  (lambda (&optional (start *char-index*))
-    (declare (fixnum start)
-	     (optimize (safety 0) (speed 3)))
-    (loop
-      for char = (stw-read-char)
-      until (eq char :eof)
-      while (funcall predicate char)
-      do (next))
-    (values start *char-index*)))
+  #'(lambda (&optional (start *char-index*))
+      (declare (fixnum start)
+	       (optimize (safety 0) (speed 3)))
+      (loop
+	for char = (stw-read-char)
+	until (eq char :eof)
+	while (funcall predicate char)
+	do (next))
+      (values start *char-index*)))
 
 
 (defun consume-until (predicate)
