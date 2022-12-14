@@ -83,9 +83,16 @@ and last characters read."
   "Consumes until character/token challenge is met. Predicate is a 
 function that accepts one character. Returns the index of the first
 and last characters read."
-  (lambda (&optional (start *char-index*))
-    (declare (fixnum start)
-	     (optimize (safety 0) (speed 3)))
+  #'(lambda (&optional (start *char-index*))
+      (declare (fixnum start)
+	       (optimize (safety 0) (speed 3)))
+      (loop
+	for char = (stw-read-char)
+	until (or (eq char :eof)
+		  (funcall predicate char))
+	do (next))
+      (values start *char-index*)))
+
 
 (declaim (ftype (function () (values fixnum fixnum)) consume-whitespace)
 	 (inline consume-whitespace))
