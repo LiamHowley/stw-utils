@@ -27,9 +27,11 @@
       (char= (the character char) #\tab)
       (newlinep (the character char))))
 
-
 (defmethod ensure-string (value &optional stream)
   (format stream "~a" value))
+
+(defmethod ensure-string ((value symbol) &optional stream)
+  (format stream "~(~a~)" value))
 
 (defmethod ensure-string ((value cons) &optional stream)
   (format stream "~{~a~^ ~}" value))
