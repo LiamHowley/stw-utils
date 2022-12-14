@@ -86,16 +86,22 @@ and last characters read."
   (lambda (&optional (start *char-index*))
     (declare (fixnum start)
 	     (optimize (safety 0) (speed 3)))
+
+(declaim (ftype (function () (values fixnum fixnum)) consume-whitespace)
+	 (inline consume-whitespace))
+
+(defun consume-whitespace ()
+  "Updates *CHAR-INDEX* while consuming 
+whitespace characters. Returns the values
+ starting index and *CHAR-INDEX*."
+  (declare (optimize (safety 0) (speed 3)))
+  (let ((start *char-index*))
+    (declare (fixnum start))
     (loop
-      for char = (stw-read-char)
-      until (or (eq char :eof)
-		(funcall predicate char))
-      do (print char)
+      while (whitespacep (stw-read-char))
       do (next))
     (values start *char-index*)))
 
-(defvar *consume-whitespace* (consume-while #'whitespacep)
-  "Returns a closure.")
 
 (declaim (inline match-string)
 	 (ftype (function (simple-string &optional boolean trie) function)

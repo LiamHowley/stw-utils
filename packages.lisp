@@ -106,7 +106,7 @@
    :*length* 
    :*decoder*
    :*encoder*
-   :*consume-whitespace*
+   :consume-whitespace
    :with-encoder
    :stw-read-char
    :next
