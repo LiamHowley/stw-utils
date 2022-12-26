@@ -1,7 +1,6 @@
 (in-package util.trie)
 
-(declaim (inline find-word%
-		 find-key
+(declaim (inline find-key
 		 find-key%
 		 insert-indexed-key
 		 split-indexed-key
@@ -32,23 +31,30 @@
 	      (values node (1+ pos))))))))
 
 
-(defun find-word% (word trie &optional (pos 0))
-  (multiple-value-bind (next end-pos)
-      (find-key word trie pos)
-    (let ((self (when next
-		  (radix-trie-word next))))
-      (cond  ((and self
-		   (null (mismatch word self)))
-	      (values (radix-trie-leaf next) self))
-	     ((and next end-pos
-		   (< end-pos (length word)))
-	      (find-word% word next end-pos))
-	     ((and end-pos (> end-pos 0))
-	      (values nil end-pos))))))
-
-
 (defmethod find-word ((word string) (trie radix-trie))
-  (find-word% word trie))
+  "Takes a search string and a radix trie, and when 
+there is a result returns the values 1. leaf (values), 
+2. matched word, and 3. last matching position, or 
+nil if an exact match."
+  (let (result)
+    (declare (list result)
+	     (inline find-word%))
+    (labels ((find-word% (word trie &optional (pos 0))
+	       (multiple-value-bind (next end-pos)
+		   (find-key word trie pos)
+		 (let ((self (when next
+			       (radix-trie-word next))))
+		   (cond ((and self
+			       (null (mismatch word self)))
+			  (setf result (list (radix-trie-leaf next) self nil)))
+			 ((and next end-pos
+			       (< end-pos (length word)))
+			  (when (and self (= end-pos (length self)))
+			    (setf result (list (radix-trie-leaf next) self end-pos)))
+			  (find-word% word next end-pos)))))))
+      (find-word% word trie))
+    (when result
+      (values-list result))))
 
 
 ;;;; inserting
