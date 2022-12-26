@@ -113,6 +113,7 @@
    :stw-peek-next-char
    :stw-peek-last-char
    :match-string
+   :match-strings
    :match-character
    :consume-until
    :consume-while
