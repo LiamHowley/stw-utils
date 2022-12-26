@@ -63,7 +63,7 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
   "Retrieve contents of file and return sequence."
   (handler-bind ((sb-int:stream-decoding-error #'(lambda (c)
 						   (declare (ignore c))
-						   (invoke-restart 'sb-int:attempt-resync))))
+						   #+sbcl(invoke-restart 'sb-int:attempt-resync))))
     (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1) 
       (with-output-to-string (out)
 	(parse-stream in out)))))
