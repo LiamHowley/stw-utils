@@ -20,11 +20,10 @@
   "Do not set globally. Encoding function for parsed documents.")
 
 
-(declaim (inline stw-read-char next)
-	 (ftype (function (&optional fixnum) (or null fixnum))
-		next)
-	 (ftype (function () (or character keyword))
-		stw-read-char))
+(declaim (inline stw-read-char next prev)
+	 (ftype (function (&optional fixnum) (or null fixnum)) next)
+	 (ftype (function (&optional fixnum) fixnum) prev)
+	 (ftype (function () (or character keyword)) stw-read-char))
 
 (defun stw-read-char ()
   "Reads char from *DOCUMENT*. Returns char."
@@ -140,7 +139,7 @@ so that other tokens may be added to the trie."
 	     do (return))
 	 (when result
 	   (prog1 *char-index*
-	     (next (length result))))))
+	     (next (length (the simple-string result)))))))
    trie))
 
 
@@ -178,7 +177,8 @@ so that other tokens may be added to the trie."
 
 
 
-(declaim (ftype (function (function) (values (or string null) character boolean)) read-until))
+(declaim (ftype (function (function) (values (or string null) character boolean)) read-until)
+	 (inline read-until))
 
 (defun read-until (predicate)
   "Reads until character/token challenge is met and can be invoked 
@@ -224,7 +224,7 @@ as a result."
       character)))
 
 
-(declaim (ftype (function (&optional function character) (values string character boolean))
+(declaim (ftype (function (&optional function character) (values (or null string) character boolean))
 		read-and-decode))
 
 (defun read-and-decode (&optional (predicate (constantly nil)) (decode-char #\&))

@@ -2,6 +2,21 @@
 
 (defvar *document*)
 
+(define-test matching-functions
+  :parent stw-util
+  (let* ((*document* "{\"accounts\" : [{\"id\" : 1, \"name\" : \"foo\"}]}")
+	 (*char-index* 0)
+	 (*length* (length *document*))
+	 (find-accounts (match-string "accounts"))
+	 (find-delimiter (match-character #\:)))
+    (false (funcall find-accounts))
+    (setf *char-index* 2)
+    (is eql 2 (funcall find-accounts))
+    (is eql (+ 2 (length "accounts")) *char-index*)
+    (false (funcall find-delimiter (char *document* *char-index*)))
+    (setf *char-index* 12)
+    (is eql 12 (funcall find-delimiter (char *document* *char-index*)))))
+
 (define-test basic-lexer
   :parent stw-util
   (let* ((*document* "{\"accounts\" : [{\"id\" : 1, \"name\" : \"foo\"}]}")
@@ -9,6 +24,7 @@
 	 (*length* (length *document*)))
     (is char= #\{ (stw-read-char))
     (is char= #\" (stw-peek-next-char))
+    (true (null (read-until (match-character #\{))))
     (is eql 1 (next))
     (is eql 1 *char-index*)
     (is char= #\{ (stw-peek-last-char))
@@ -74,6 +90,7 @@
 			      do (setf result value)
 			    while next
 			    finally (return (values result i))))))))
+    (true (null (read-and-decode (match-character #\J))))
     (is string= "Just <" (read-and-decode (match-character #\a)))
     (is char= #\a (stw-read-char))
     (next 2)

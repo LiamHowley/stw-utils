@@ -23,18 +23,26 @@
   (print-unreadable-object (object stream :type t :identity t)))
 
 
-(defun next-key (key trie &optional (test #'char=))
+(declaim (ftype (function (character trie) (values (or null trie) list)) next-key))
+
+(defun next-key (key trie)
   "Returns two values: the cons of the next node, and the branch, or nil"
+  (declare (optimize (speed 3)(safety 0)))
   (awhen (trie-branch trie)
-    (values (cdr (assoc key self :test (the function test))) self)))
+    (values (cdr (assoc key self :test #'char=)) self)))
 
 
-(defun walk-branch (trie &optional (fn #'next-key) (test #'char=))
+(declaim (ftype (function (trie &optional function) function) walk-branch))
+
+(defun walk-branch (trie &optional (fn #'next-key))
   "Returns a function, that accepts a key as argument and encapsulates 
 and updates the current working trie."
+  (declare (optimize (speed 3)(safety 0)))
   (let ((working-trie trie))
     #'(lambda (key)
-	(awhen (funcall fn key working-trie test)
+	(declare (optimize (speed 3)(safety 0))
+		 (character key))
+	(awhen (funcall fn key working-trie)
 	  (setf working-trie self)))))
 
 
@@ -68,15 +76,22 @@ and updates the current working trie."
     result))
 
 
+(declaim (ftype (function (trie character &optional trie) trie) insert-key))
+
 (defun insert-key (trie key &optional (next-trie (make-trie)))
   "Insert key into branch of next-trie."
+  (declare (optimize (speed 3) (safety 0)))
   (setf (trie-branch trie)
 	(acons key next-trie (trie-branch trie)))
   next-trie)
 
-(defun insert-character (char trie &optional (test #'char=))
+
+(declaim (ftype (function (character trie) (values (or null trie) list)) insert-character))
+
+(defun insert-character (char trie)
   "Insert character into branch of trie."
-  (declare (special case-sensitive)
+  (declare (optimize (speed 3) (safety 0))
+	   (special case-sensitive)
 	   (inline next-key))
   (let ((alternate
 	 (unless case-sensitive
@@ -94,7 +109,7 @@ and updates the current working trie."
 		   branch (trie-branch trie))))
       (unless (or case-sensitive
 		  (char= char alternate)
-		  (assoc alternate branch :test test))
+		  (assoc alternate branch :test #'char=))
 	(insert-key trie alternate next))
       (values next branch))))
 
