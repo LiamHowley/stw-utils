@@ -40,6 +40,13 @@ If none is supplied, *CHAR-INDEX* increments by 1"
   (setf *char-index* (+ increment *char-index*)))
 
 
+(defun prev (&optional (decrement 1))
+  "Decrements *CHAR-INDEX* by a supplied decrement.
+If none is supplied, *CHAR-INDEX* decrements by 1"
+  (declare (optimize (safety 0) (speed 3)))
+  (setf *char-index* (- *char-index* decrement)))
+
+
 (declaim (inline stw-peek-next-char
 		 stw-peek-last-char)
 	 (ftype (function () (or character null))

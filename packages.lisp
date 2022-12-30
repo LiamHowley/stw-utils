@@ -110,6 +110,7 @@
    :with-encoder
    :stw-read-char
    :next
+   :prev
    :stw-peek-next-char
    :stw-peek-last-char
    :match-string
