@@ -179,68 +179,71 @@ booleans: found and deleted."
 
 
 
-(declaim (ftype (function (function trie &optional boolean) list) walk-trie))
+(declaim (ftype (function (trie &optional function) list) walk-trie))
 
-(defgeneric walk-trie (fn trie &optional case-sensitive)
+(defgeneric walk-trie (trie &optional function)
   (:documentation "Depth first traversal that returns a flattened list."))
 
-(defmethod walk-trie (fn (trie trie) &optional case-sensitive)
+(defmethod walk-trie ((trie trie) &optional (fn #'identity))
   (declare (optimize (speed 3) (safety 0)))
-  (let ((char))
     (labels ((walk (next acc)
 	       (typecase next
 		 (cons
-		  ;; in trie-branch
-		  (cond ((and case-sensitive (typep (car next) 'character))
-			 (setf char (car next))
-			 (walk (cdr next) acc))
-			((and (typep (car next) 'base-char)
-			      (char= (car next) (char-downcase (the base-char (car next)))))
-			 (setf char (car next))
+		  (cond ((typep (car next) 'character)
 			 (walk (cdr next) acc))
 			((typep (car next) 'character)
 			 acc)
 			(t
 			 (walk (cdr next) (walk (car next) acc)))))
 		 (trie
-		  (let ((result (funcall fn char next)))
 		    (walk (trie-branch next)
-			  (aif result
+			  (aif (funcall (the function fn) next)
 			       (cons self acc)
-			       acc))))
+			       acc)))
 		 (t
 		  acc))))
-      (walk trie nil))))
+      (walk trie nil)))
 
 
-(defun walk-leaves (trie)
+(defun walk-leaves (trie &optional (fn #'identity))
   "Recursively walks trie and accumulates
 outer leaves."
-  (walk-trie #'(lambda (char trie)
-		 (declare (ignore char))
-		 (or (trie-leaf trie)
-		     (trie-word trie)))
-	     trie))
+  (walk-trie
+   trie
+   #'(lambda (trie)
+       (when (or (trie-leaf trie)
+		 (trie-word trie))
+	 (funcall fn trie)))))
+
+
+(defun merge-tries (&rest tries)
+  (let ((the-trie (car tries)))
+    (loop
+      for trie in (cdr tries)
+      do (walk-leaves
+	  trie
+	  #'(lambda (trie%)
+	      (print (trie-word trie%))
+	      (insert-word (trie-word trie%) the-trie (trie-leaf trie%)))))
+    the-trie))
 
 
 (defmethod compress-edge ((trie trie))
   "Compress edge of trie, when there 
 are no other keys."
   (walk-trie
-   #'(lambda (key next)
-       (declare (ignore key))
+   trie
+   #'(lambda (next)
        (let ((edge-nodes
-	      (walk-trie #'(lambda (char trie)
-			     (declare (ignore char))
-			     (when (or (trie-leaf trie)
-				       (trie-word trie))
-			       trie))
-			 next)))
+	       (walk-trie #'(lambda (trie)
+			      (when (or (trie-leaf trie)
+					(trie-word trie))
+				trie))
+			  next)))
 	 (when (eql (length edge-nodes) 1)
 	   (let ((node (car edge-nodes)))
 	     (setf (trie-word next) (trie-word node)
 		   (trie-leaf next) (trie-leaf node)
 		   (trie-branch next) nil))))
-       (values))
-   trie)
+       (values)))
   trie)

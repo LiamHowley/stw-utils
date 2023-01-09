@@ -52,8 +52,10 @@
    :delete-word
    :trie-branch
    :trie-leaf
+   :trie-word
    :walk-branch
    :walk-trie
+   :merge-tries
    :walk-leaves
    :compress-edge
 
@@ -188,9 +190,11 @@
    :delete-word
    :trie-branch
    :trie-leaf
+   :trie-word
    :walk-branch
    :walk-trie
    :walk-leaves
+   :merge-tries
    :compress-edge
 
    ;; radix-trie
