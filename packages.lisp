@@ -153,7 +153,10 @@
    :concatenate-files
    :concatenate-and-remove-duplicates
    :remove-duplicate-lines-from-file
-   :remove-duplicate-lines-from-string)
+   :remove-duplicate-lines-from-string
+
+   ;; hash-tables
+   :merge-hash-tables)
 
   (:export
    :scase

@@ -3,6 +3,7 @@
     :serial t
     :components ((:file "packages")
 		 (:file "macro-functions")
+		 (:file "hashtable-functions")
 		 (:file "list-functions")
 		 (:file "binary-functions")
 		 (:file "trie")
