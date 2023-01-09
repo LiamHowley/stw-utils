@@ -111,7 +111,9 @@ whitespace characters. Returns the values
   (let ((start *char-index*))
     (declare (fixnum start))
     (loop
-      while (whitespacep (stw-read-char))
+      for char = (stw-read-char)
+      while (and (characterp char)
+		 (whitespacep char))
       do (next))
     (values start *char-index*)))
 
