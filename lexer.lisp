@@ -218,7 +218,7 @@ indicating EOF"
 
 
 
-(declaim (ftype (function (function) (or character null)) decode)
+(declaim (ftype (function (function) (or simple-string character null)) decode)
 	 (inline decode))
 
 (defun decode (decoder)
@@ -226,14 +226,14 @@ indicating EOF"
 coordinates of the observed entity, and the decoded character
 as a result."
   (declare (optimize (safety 0) (speed 3)))
-  (multiple-value-bind (character position)
+  (multiple-value-bind (result position)
       (funcall decoder *char-index*)
-    (when character
-      (setf *char-index* (the fixnum position))
-      character)))
+    (when position
+      (setf *char-index* (the fixnum position)))
+    result))
 
 
-(declaim (ftype (function (&optional function character) (values (or null string) character boolean))
+(declaim (ftype (function (&optional function character) (values (or null simple-string) character boolean))
 		read-and-decode))
 
 (defun read-and-decode (&optional (predicate (constantly nil)) (decode-char #\&))
@@ -255,22 +255,29 @@ against all chars, but those in encoded entities. Returns a decoded subseq of
 	(cond ((eq char decode-char)
 	       (when token
 		 (push token fragments))
-	       (let ((character (decode *decoder*)))
-		 (if character
-		     (push character fragments)
-		     ;; test if char is matched by the predicate function.
+	       (let ((result (decode *decoder*)))
+		 (if result
+		     ;; We have a decoded character/string
+		     (push result fragments)
+		     ;; Otherwise, test if char is matched by the predicate function.
 		     ;; If so process and return.
 		     (cond ((funcall (the function predicate) decode-char)
 			    (push (make-displaced-array *document* start *char-index*) fragments)
-			    (return (values (the simple-array (concat-string (nreverse fragments))) decode-char eof)))
+			    (return (values (the simple-string (concat-string (nreverse fragments))) decode-char eof)))
 			   (t
-			    (next)
-			    (push (make-displaced-array *document* start *char-index*) fragments)))))
+			    ;; Neither a result nor a match. If (> *char-index* start) an entity
+			    ;; was parsed but decoding was declined. This may be due to the a
+			    ;; unicode character being illegal or something such. In which case
+			    ;; do nothing. Otherwise consume the DECODE-CHAR that prompted
+			    ;; this, and continue.
+			    (unless (> *char-index* start)
+			      (next)
+			      (push decode-char fragments))))))
 	       (setf last *char-index*))
 	      (t
 	       (cond (fragments
 		      (push (the string (make-displaced-array *document* last *char-index*)) fragments)
-		      (return (values (the simple-array (concat-string (nreverse fragments))) char eof)))
+		      (return (values (the simple-string (concat-string (nreverse fragments))) char eof)))
 		     (t
 		      (return (values token char eof))))))))))
 
