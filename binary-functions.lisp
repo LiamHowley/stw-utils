@@ -804,7 +804,7 @@ before falling back on flexi-streams."
   #+:ccl
   (apply #'ccl:encode-string-to-octets string rest)
   #-(or :allegro :sbcl :cmucl :ccl)
-  (apply #'flex:string-to-octets string rest))
+  (apply #'babel:string-to-octets string rest))
 
 (defun octets-to-string
     (octets &rest rest &key (external-format :default) (start 0) (end (length octets)) &allow-other-keys)
@@ -820,4 +820,4 @@ before falling back on flexi-streams."
   #+:ccl
   (apply #'ccl:encode-octets-to-string octets rest)
   #-(or :allegro :sbcl :cmucl :ccl)
-  (apply #'flex:octets-to-string octets rest))
+  (apply #'babel:octets-to-string octets rest))
