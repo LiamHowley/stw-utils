@@ -139,6 +139,9 @@
    :find-and-replace
    :make-displaced-array
 
+   ;; numbers
+   :get-float
+
    ;; files/directories/io
    :walk-directory
    :list-files
