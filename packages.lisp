@@ -217,4 +217,5 @@
 
    ;; miscellaneous
    :string->symbol
-   :keyword->symbol))
+   :keyword->symbol
+   :symbol-from))
