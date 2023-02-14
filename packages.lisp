@@ -213,4 +213,8 @@
    :byte-trie-word
    :byte-trie-leaf
    :byte-trie-branch
-   :make-byte-trie))
+   :make-byte-trie
+
+   ;; miscellaneous
+   :string->symbol
+   :keyword->symbol))

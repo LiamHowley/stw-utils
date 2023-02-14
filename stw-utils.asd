@@ -14,5 +14,6 @@
 	       (:file "number-functions")
 	       (:file "lexer")
 	       (:file "control-flow")
+	       (:file "miscellaneous")
 	       (:file "directories-and-files"))
   :in-order-to ((test-op (load-op :stw-utils-test))))
