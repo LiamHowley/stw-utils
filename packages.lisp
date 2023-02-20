@@ -92,6 +92,7 @@
    :reverse-flatten
    :map-tree-depth-first
    :map-tree-breadth-first
+   :map-tree-path
    :mappend
    :find-in-tree
    :assoc-all

@@ -63,20 +63,51 @@ Returns flattened results."
 	(queue))
     (flet ((walk (inner)
 	     (loop for item in inner
-		if (atom item)
-		do (let ((result (funcall (the function fn) item)))
-		     (cond ((and result (eq result t))
-			    (push item values))
-			   (result (push result values))))
-		else collect item into children
-		finally (setf queue (append queue children)))))
+		   if (atom item)
+		     do (let ((result (funcall (the function fn) item)))
+			  (cond ((and result (eq result t))
+				 (push item values))
+				(result (push result values))))
+		   else collect item into children
+		   finally (setf queue (append queue children)))))
       (walk list)
       (loop
-	 while queue
-	 for child = (pop queue)
-	 do (walk child)
-	 finally (return (nreverse values))))))
-	 
+	while queue
+	for child = (pop queue)
+	do (walk child)
+	finally (return (nreverse values))))))
+
+
+(declaim (ftype (function (list list &optional function function) list) map-tree-path))
+
+(defun map-tree-path (list path &optional (map #'identity) (pred #'eql))
+  "Takes a list of nested assoc tables, a list of keys denoting a path,
+and optional map function that accepts one argument, and an optional predicate
+function that accepts two arguments. Uses breadth-first algorithm and 
+returns the list of mapped objects that correspond to the path and predicate
+function."
+  (declare (optimize (speed 3) (safety 0)))
+  (let ((values)
+	(queue))
+    (flet ((walk (inner)
+	     (loop
+	       for (key value) in inner
+	       when (funcall pred key (car path))
+		 do (let ((result (funcall (the function map) key)))
+		      (cond ((and result (eq result t))
+			     (push key values))
+			    (result (push result values))))
+		 and collect value into children
+	       finally (setf path (cdr path)
+			     queue (append queue children)))))
+      (walk list)
+      (loop
+	while (and queue path)
+	for child = (pop queue)
+	do (walk child)
+	finally (return (nreverse values))))))
+
+
 
 (defun find-in-tree (value tree &key (test #'equal))
   "Recursively walks through a TREE testing VALUE against
