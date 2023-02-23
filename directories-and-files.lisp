@@ -227,3 +227,12 @@ Returns output-stream"
 (defun concatenate-and-remove-duplicates (directory &optional file-type)
   "Walk directory, concatenate files (of optional type - string) and remove duplicates"
   (remove-duplicate-lines-from-string (concatenate-files directory file-type)))
+
+
+(defun concatenate-pathname-directories (&rest pathnames)
+  "Accepts pathnames or strings. Returns a pathname of concatenated strings. 
+Assumes that all pathnames are directories, irrespective of the presence of 
+the leading/trailing #\/ character."
+  (let ((directories (loop for pathname in pathnames
+			   append (explode-string (namestring pathname) #\/ :remove-separators t))))
+    (make-pathname :directory (push :absolute directories))))
