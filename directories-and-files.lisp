@@ -234,5 +234,8 @@ Returns output-stream"
 Assumes that all pathnames are directories, irrespective of the presence of 
 the leading/trailing #\/ character."
   (let ((directories (loop for pathname in pathnames
-			   append (explode-string (namestring pathname) #\/ :remove-separators t))))
-    (make-pathname :directory (push :absolute directories))))
+			   when (or (pathnamep pathname)
+				    (stringp pathname))
+			     append (explode-string (namestring pathname) #\/ :remove-separators t))))
+    (when directories
+      (make-pathname :directory (push :absolute directories)))))
