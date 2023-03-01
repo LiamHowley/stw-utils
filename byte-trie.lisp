@@ -15,7 +15,8 @@
 (defstruct byte-trie
   word
   leaf
-  (branch nil :type (or null array)))
+  (branch nil :type (or null array))
+  (extension nil :type (or null hash-table)))
 
 (defmethod print-object ((object byte-trie) stream)
   (print-unreadable-object (object stream :type t :identity t)))
@@ -23,10 +24,16 @@
 
 (defun next-key% (key trie)
   "Returns two values: the cons of the next node, and the branch, or nil"
-  (let* ((branch (byte-trie-branch trie))
-	 (next (when branch (aref branch key))))
-    (when (typep next 'byte-trie)  
-      (values next branch))))
+  (let ((branch (byte-trie-branch trie)))
+    (flet ((get-extended-value ()
+	     (awhen (byte-trie-extension trie)
+	       (values (gethash key self) self))))
+      (if branch
+	  (awhen (aref branch key)
+	    (if (typep self 'byte-trie)
+		(values self branch)
+		(get-extended-value)))
+	  (get-extended-value)))))
 
 
 (defun walk-branch% (trie &optional (fn #'next-key%))
@@ -70,9 +77,15 @@ and updates the current working trie."
 
 (defun insert-byte-key (trie key &optional (branch-length 256) (next-trie (make-byte-trie)))
   "Insert key into branch of next-trie."
-  (or (byte-trie-branch trie)
-      (setf (byte-trie-branch trie) (make-array branch-length :element-type '(or null byte-trie))))
-  (setf (aref (byte-trie-branch trie) key) next-trie))
+  (cond ((< key branch-length)
+	 (or (byte-trie-branch trie)
+	     (setf (byte-trie-branch trie) (make-array branch-length :element-type '(or fixnum byte-trie))))
+	 (setf (aref (byte-trie-branch trie) key) next-trie))
+	(t
+	 (aif (byte-trie-extension trie)
+	      (setf (gethash key self) next-trie)
+	      (let ((table (setf (byte-trie-extension trie) (make-hash-table))))
+		(setf (gethash key table) next-trie))))))
 
 
 (defun insert-byte (byte trie &optional (branch-length 256))
@@ -143,10 +156,15 @@ for DELETE-WORD."
 	(loop
 	   while stack
 	   do (let* ((trie (pop stack))
-		     (children (loop for trie% across (byte-trie-branch trie)
-				     collect trie%)))
+		     (children (append (loop
+					 for trie% across (byte-trie-branch trie)
+					 when (typep trie% trie)
+					   collect trie%)
+				       (loop for value being each hash-values of (byte-trie-extension trie)
+					     collect value))))
 		(cond ((and children (< (length children) 2))
-		       (setf (byte-trie-branch trie) nil))
+		       (setf (byte-trie-branch trie) nil
+			     (byte-trie-extension trie) nil))
 		      (children
 		       (remove-trie% (car stack) trie)
 		       (return (values t t)))))))))

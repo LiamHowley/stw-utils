@@ -30,7 +30,9 @@
    :util.binary
    :lowercasep
    :get-uppercase
-   :get-lowercase)
+   :get-lowercase
+   :string-to-octets
+   :octets-to-string)
 
   (:import-from
    :util.macro
