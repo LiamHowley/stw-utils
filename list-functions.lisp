@@ -106,20 +106,20 @@ function."
 	(last (car (last path)))
 	(path path))
     (flet ((walk (inner)
-	     (let ((relevant (funcall (the function test) (car path) last)))
-	       (loop
-		 for (key value) in inner
-		 with children = nil
-		 when (funcall test key (car path))
-		   do (if relevant
-			  (let ((result (funcall (the function map) value)))
-			    (cond ((and result (eq result t))
-				   (push value values))
-				  (result (push result values))))
-			  (when (consp value)
-			    (setf children (append children value))))
-		 finally (setf path (cdr path)
-			       queue children)))))
+	     (let ((relevant (funcall (the function test) (car path) last))
+		   (children (assoc-all (car path) inner :test test)))
+	       (map nil #'(lambda (child)
+			    (let ((value (if (dotted-p child) (cdr child) (cadr child))))
+			      (if relevant
+				  (let ((result (funcall (the function map) value)))
+				    (cond ((and result (eq result t))
+					   (push value values))
+					  (result (push result values))))
+				  (when (consp value)
+				    (setf children (append children value))))))
+		    children)
+	       (setf path (cdr path)
+		     queue children))))
       (walk list)
       (loop
 	while (and queue path)

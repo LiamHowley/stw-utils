@@ -7,6 +7,28 @@
 
 (defvar alist '((:one . 1) (:two . 2) (:one . 1.0) (:three . 3) (:two . "two")))
 
+(defvar testpath-list
+  '((:a ((:one 1)
+	 (:two 2)
+	 (:three ((:x . "x")
+		  (:y . "y")
+		  (:z . "z")))))
+    (:b ((:one 1)
+	 (:two 2)
+	 (:three ((:x "x")
+		  (:y "y")
+		  (:z "z")))))
+    (:a ((:one 1)
+	 (:two ((:x "1")
+		(:y "2")
+		(:z "3")))
+	 (:three 3)))
+    (:a ((:one 1)
+	 (:two 2)
+	 (:three ((:x 1)
+		  (:y 1)
+		  (:z 1)))))))
+
 (define-test tree-processing-functions
   :parent stw-util
   (is equal (flatten testlist1)
@@ -24,8 +46,9 @@
   (false (find-in-tree #\e testlist2))
   (true (find-in-tree '(:four (:five :six) :seven) testlist1))
   (is equal (mappend #'map-tree-depth-first #'list testlist1)
-      '(:one :two :three :four :five :six :seven :eight :nine :ten)))
-
+      '(:one :two :three :four :five :six :seven :eight :nine :ten))
+  (is equal '("x" 1) (map-tree-path testpath-list '(:a :three :x)))
+  (is equal '(1) (map-tree-path testpath-list '(:a :three :x) :map #'numberp)))
 
 (define-test list-processing-functions
   :parent stw-util
@@ -128,25 +151,3 @@
       (xor *xor3* *xor2* *xor4*)
     (is eq result :bar)
     (is eq xor t)))
-
-#+()(setf testlist
-	'((:a ((:one 1)
-	       (:two 2)
-	       (:three ((:x "x")
-			(:y "y")
-			(:z "z")))))
-	  (:b ((:one 1)
-	      (:two 2)
-	      (:three ((:x "x")
-		       (:y "y")
-		       (:z "z")))))
-	  (:a ((:one 1)
-	      (:two ((:x "1")
-		     (:y "2")
-		     (:z "3")))
-	      (:three 3)))
-	  (:a ((:one 1)
-	       (:two 2)
-	       (:three ((:x "1")
-			(:y "1")
-			(:z "1")))))))
