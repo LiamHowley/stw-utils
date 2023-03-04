@@ -109,8 +109,8 @@ correspond to the path and map function as defined by the keyword MAP."
 	     (let ((relevant (funcall (the function test) (car path) last))
 		   (children (funcall (if once-only
 					  #'assoc
-					  #'assoc-all
-					  (car path) inner :test test))))
+					  #'assoc-all)
+				      (car path) inner :test test)))
 	       (map nil #'(lambda (child)
 			    (let ((value (if (dotted-p child) (cdr child) (cadr child))))
 			      (if relevant
