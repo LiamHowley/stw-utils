@@ -1,5 +1,19 @@
 (in-package stw.util)
 
+(declaim (inline dotted-p dotted-list-p dotted-alist-p))
+
+(defun dotted-p (list)
+  (and (listp list)
+       (not (listp (cdr list)))))
+
+(defun dotted-list-p (list)
+  (and (listp list)
+       (dotted-p (last list))))
+
+(defun dotted-alist-p (list)
+  (every #'dotted-p list))
+
+
 (declaim (ftype (function (list) list)
 		flatten
 		reverse-flatten))

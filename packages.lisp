@@ -103,6 +103,10 @@
    :number-range
    :set-difference%
    :array-to-list
+   :dotted-p
+   :dotted-list-p
+   :dotted-alist-p
+   :loop-over-list
 
    ;; lexer
    :*document*
