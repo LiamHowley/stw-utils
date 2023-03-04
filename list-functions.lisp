@@ -78,33 +78,38 @@ Returns flattened results."
 	finally (return (nreverse values))))))
 
 
-(declaim (ftype (function (list list &optional function function) list) map-tree-path))
 
-(defun map-tree-path (list path &optional (map #'identity) (pred #'eql))
+
+(defun map-tree-path (list path &key (map #'identity) (test #'eql))
   "Takes a list of nested assoc tables, a list of keys denoting a path,
 and optional map function that accepts one argument, and an optional predicate
 function that accepts two arguments. Uses breadth-first algorithm and 
 returns the list of mapped objects that correspond to the path and predicate
 function."
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (speed 3)(safety 0)))
   (let ((values)
-	(queue))
+	(queue)
+	(last (car (last path)))
+	(path path))
     (flet ((walk (inner)
-	     (loop
-	       for (key value) in inner
-	       when (funcall pred key (car path))
-		 do (let ((result (funcall (the function map) key)))
-		      (cond ((and result (eq result t))
-			     (push key values))
-			    (result (push result values))))
-		 and collect value into children
-	       finally (setf path (cdr path)
-			     queue (append queue children)))))
+	     (let ((relevant (funcall (the function test) (car path) last)))
+	       (loop
+		 for (key value) in inner
+		 with children = nil
+		 when (funcall test key (car path))
+		   do (if relevant
+			  (let ((result (funcall (the function map) value)))
+			    (cond ((and result (eq result t))
+				   (push value values))
+				  (result (push result values))))
+			  (when (consp value)
+			    (setf children (append children value))))
+		 finally (setf path (cdr path)
+			       queue children)))))
       (walk list)
       (loop
 	while (and queue path)
-	for child = (pop queue)
-	do (walk child)
+	do (walk queue)
 	finally (return (nreverse values))))))
 
 
