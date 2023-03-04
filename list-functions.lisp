@@ -94,12 +94,12 @@ Returns flattened results."
 
 
 
-(defun map-tree-path (list path &key (map #'identity) (test #'eql))
-  "Takes a list of nested assoc tables, a list of keys denoting a path,
-and optional map function that accepts one argument, and an optional predicate
-function that accepts two arguments. Uses breadth-first algorithm and 
-returns the list of mapped objects that correspond to the path and predicate
-function."
+(defun map-tree-path (list path &key (map #'identity) (test #'eql) once-only)
+  "Takes a list of nested assoc tables, a list of keys denoting a path. Keywords
+include :MAP, a function that defaults to IDENTITY; :TEST which represents an equality
+function and defaults to EQL; and :ONCE-ONLY, which when T returns the first result.
+ It uses a breadth-first algorithm and returns the list of mapped objects that 
+correspond to the path and map function as defined by the keyword MAP."
   (declare (optimize (speed 3)(safety 0)))
   (let ((values)
 	(queue)
@@ -107,7 +107,10 @@ function."
 	(path path))
     (flet ((walk (inner)
 	     (let ((relevant (funcall (the function test) (car path) last))
-		   (children (assoc-all (car path) inner :test test)))
+		   (children (funcall (if once-only
+					  #'assoc
+					  #'assoc-all
+					  (car path) inner :test test))))
 	       (map nil #'(lambda (child)
 			    (let ((value (if (dotted-p child) (cdr child) (cadr child))))
 			      (if relevant
