@@ -229,7 +229,9 @@ trie to be added."
 	(unless with-bounding-text
 	  (setf outer-bound index)))
       (when (or with-bounding-text (< last outer-bound))
-	(push (subseq seq last outer-bound) list)))
+	(push (funcall (the function map-word)
+		       (subseq seq last outer-bound))
+	      list)))
     (nreverse list)))
 
 
