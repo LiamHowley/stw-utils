@@ -93,41 +93,65 @@ Returns flattened results."
 
 
 
-
-(defun map-tree-path (list path &key (map #'identity) (test #'eql) once-only)
-  "Takes a list of nested assoc tables, a list of keys denoting a path. Keywords
-include :MAP, a function that defaults to IDENTITY; :TEST which represents an equality
-function and defaults to EQL; and :ONCE-ONLY, which when T returns the first result.
- It uses a breadth-first algorithm and returns the list of mapped objects that 
-correspond to the path and map function as defined by the keyword MAP."
+(defun walk-tree-path (tree path path-function &optional (selector-function #'identity) (mapping-function #'identity))
+  "Arguments: 
+1. A tree - agnostic, as to the nature of the tree.
+2. A path (list) - may be keys or type, or any determining value that denotes a path. 
+3. A path function which accepts two arguments, the path position
+and an inner node, list etc, and returns two values, finalize, a boolean indicating
+when the end of the path has been reached, and the next children. As the algorithm uses
+the MAP function the children returned must be a sequence.
+4. An optional selector function - a function to access child from the returned children of
+the path function at 3. 
+5. An optional mapping function that defaults to IDENTITY. 
+Algorith: breadth-first.
+Returns: A list of mapped objects that correspond to the path and map function."
   (declare (optimize (speed 3)(safety 0)))
   (let ((values)
-	(queue)
-	(last (car (last path)))
-	(path path))
-    (flet ((walk (inner)
-	     (let ((relevant (funcall (the function test) (car path) last))
-		   (children (funcall (if once-only
-					  #'assoc
-					  #'assoc-all)
-				      (car path) inner :test test)))
+	(queue))
+    (flet ((walk(inner)
+	     (multiple-value-bind (finalize children)
+		 (funcall (the function path-function) (car path) inner)
 	       (map nil #'(lambda (child)
-			    (let ((value (if (dotted-p child) (cdr child) (cadr child))))
-			      (if relevant
-				  (let ((result (funcall (the function map) value)))
+			    (awhen (funcall (the function selector-function) child)
+			      (if finalize
+				  (let ((result (funcall (the function mapping-function) self)))
 				    (cond ((and result (eq result t))
-					   (push value values))
+					   (push self values))
 					  (result (push result values))))
-				  (when (consp value)
-				    (setf children (append children value))))))
+				  (when (listp self)
+				    (setf children (append children (ensure-list self)))))))
 		    children)
 	       (setf path (cdr path)
 		     queue children))))
-      (walk list)
+      (walk (ensure-list tree))
       (loop
 	while (and queue path)
 	do (walk queue)
 	finally (return (nreverse values))))))
+
+
+
+(declaim (ftype (function (list list &key (map function) (test function) (once-only boolean)))
+		map-tree-path))
+
+(defun map-tree-path (tree path &key (map #'identity) (test #'eql) once-only)
+  "Takes a tree of nested assoc tables, a list of keys denoting a path. Keywords
+include :MAP, a function that defaults to IDENTITY; :TEST which represents an equality
+function and defaults to EQL; and :ONCE-ONLY, which when T returns the first result.
+Calls the function WALK-TREE-PATH which uses a breadth-first algorithm and returns 
+the list of mapped objects that correspond to the path and map function."
+  (declare (optimize (speed 3)(safety 0)))
+  (let ((last (car (last path))))
+    (walk-tree-path
+     tree path
+     #'(lambda (path-position inner)
+	 (values (funcall (the function test) path-position last)
+		 (funcall (if once-only #'assoc #'assoc-all) path-position inner :test test)))
+     #'(lambda (child)
+	 (if (dotted-p child) (cdr child) (cadr child)))
+     map)))
+
 
 
 
