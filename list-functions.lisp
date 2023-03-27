@@ -109,7 +109,7 @@ Returns: A list of mapped objects that correspond to the path and map function."
   (declare (optimize (speed 3)(safety 0)))
   (let ((values)
 	(queue))
-    (flet ((walk(inner)
+    (flet ((walk (inner)
 	     (multiple-value-bind (finalize children)
 		 (funcall (the function path-function) (car path) inner)
 	       (map nil #'(lambda (child)

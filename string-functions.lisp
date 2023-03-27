@@ -175,20 +175,24 @@ trie to be added."
 			 &key (start 0) (end (length seq)) end-test
 			   (map (constantly nil)) one-only)
   (loop 
-     for index from start
-     until (or (and end-test
-		    (funcall end-test (aref seq index)))
-	       (eql index end)
-	       (and one-only acc))
-     for acc = (funcall matchers index)
-     when acc
-     do (setf acc (funcall map acc))
-     when acc
-     collecting acc into results
-     finally (return (cond (one-only
-			    results)
-			   (t
-			    (values results index))))))
+    with index = start
+    until (or (and end-test
+		   (funcall end-test (aref seq index)))
+	      (>= index end)
+	      (and one-only acc%))
+    for acc% = (funcall matchers index)
+    for acc = nil
+    if acc%
+      do (setf index (cadr acc%)
+	       acc (funcall map acc%))
+    else
+      do (incf index)
+    when acc
+      collecting acc into results
+    finally (return (cond (one-only
+			   results)
+			  (t
+			   (values results index))))))
 
 
 (defun map-exploding-string (seq args
@@ -201,8 +205,9 @@ trie to be added."
 	 (last start)
 	 (list)
 	 (outer-bound (or end length)))
-    (when (and with-bounding-text (> start 0))
-      (push (subseq seq 0 start) list))
+    (unless one-only
+      (when (and with-bounding-text (> start 0))
+	(push (subseq seq 0 start) list)))
     (multiple-value-bind (results index)
 	(consume-sequence (etypecase args
 			    (list (match-tokens seq args))
@@ -225,14 +230,17 @@ trie to be added."
 				       (setf outer-bound end%)))
 				   (values)))
       (declare (ignore results))
-      (when (and index end-test)
-	(unless with-bounding-text
-	  (setf outer-bound index)))
-      (when (or with-bounding-text (< last outer-bound))
-	(push (funcall (the function map-word)
-		       (subseq seq last outer-bound))
-	      list)))
-    (nreverse list)))
+      (cond (one-only
+	     (car list))
+	    (t
+	     (when (and index end-test)
+	       (unless with-bounding-text
+		 (setf outer-bound index)))
+	     (when (or with-bounding-text (< last outer-bound))
+	       (push (funcall (the function map-word)
+			      (subseq seq last outer-bound))
+		     list))
+	     (nreverse list))))))
 
 
 
