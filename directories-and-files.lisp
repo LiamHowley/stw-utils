@@ -65,8 +65,9 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
 						   (declare (ignore c))
 						   #+sbcl(invoke-restart 'sb-int:attempt-resync))))
     (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1) 
-      (with-output-to-string (out)
-	(parse-stream in out)))))
+      (when in
+	(with-output-to-string (out)
+	  (parse-stream in out))))))
 
 
 (defun file-exists-p (file if-exists if-does-not-exist)
@@ -108,12 +109,15 @@ walks directory, invoking FIND-IN-FILE.
 Returns the file name where results are found, along with their
 indexed location."
   (flet ((walk (file)
-	   (let ((file-name (pathname-name file)))
-	     (unless (or (and (char= (char file-name 0) #\.)
-			      (char= (char file-name 1) #\#))
-			 (char= (char file-name 0) #\#))
-	       (awhen (find-in-file file args)
-		 (list file self))))))
+	   (handler-bind ((error #'(lambda (c)
+				     (declare (ignore c))
+				     (invoke-restart 'skip-non-parsing-file))))
+	     (let ((file-name (pathname-name file)))
+	       (unless (or (and (char= (char file-name 0) #\.)
+				(char= (char file-name 1) #\#))
+			   (char= (char file-name 0) #\#))
+		 (awhen (find-in-file file args)
+		   (list file self)))))))
     (walk-directory
      (lambda (file)
        (cond ((and file-type (string-equal (pathname-type file) file-type))
@@ -138,7 +142,12 @@ Any function calls must accept a seq and index,
 and (+ index (length index)), or nil. E.g. Matching \"abc\" in 
 \"abcdefgabc\" returns a list of '((0 3) (7 10)) 
 while #\e returns (4 5)."
-  (apply #'find-all (sequence-from-file file nil) args))
+  (restart-case 
+      (awhen (sequence-from-file file nil)
+	(apply #'find-all self args))
+    (skip-non-parsing-file () nil)))
+
+
 
 
 (defun alter-file-contents (file replacement-list &optional verbose)
