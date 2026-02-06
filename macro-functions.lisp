@@ -50,6 +50,26 @@ condition is bound to self, and available for capture."
      ,@body))
 
 
+(defmacro with-batch-loader ((vars params &optional message) &body body)
+  "Batch load forms such as classes and functions. As 
+the macro body uses a loop, vars can be any pattern that matches
+the params, i.e. ITEM, (KEY VALUE), (KEY . VALUE). Params must be 
+a list."
+  `(macrolet ((loading ()
+		            (when ,message
+		              (princ ,message)
+		              (terpri))
+		            `(progn
+		               ,@(loop
+		                   for ,vars in ,params
+		                   ,@(loop
+			                     for form in (cdar body)
+			                     collect (caar body)
+			                     collect form)))))
+     (loading)))
+
+
+
 (defmacro iterate-extend (&body body)
   "Extends the macro iterate. Expands the macrolet FOR= into
 (for <var> = <value>) expressions; the macrolet COLLECT-INTO into

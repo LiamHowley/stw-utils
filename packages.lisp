@@ -7,11 +7,12 @@
    :aif
    :awhen
    :self
-   :with-gensyms))
+   :with-gensyms
    :iterate-extend
    :for=
    :collect-into
    :collect-all
+   :with-batch-loader))
 
 
 (defpackage util.binary
@@ -92,7 +93,7 @@
 
    ;; control flow
    :xor
-   
+
    ;; lists
    :flatten
    :reverse-flatten
@@ -117,7 +118,7 @@
    :*document*
    :*char-index*
    :*line-number*
-   :*length* 
+   :*length*
    :*decoder*
    :*encoder*
    :consume-whitespace
@@ -182,7 +183,12 @@
    :aif
    :awhen
    :self
-   :with-gensyms)
+   :with-gensyms
+   :with-batch-loader
+   :iterate-extend
+   :for=
+   :collect-into
+   :collect-all)
 
   (:export
    :whitespacep
