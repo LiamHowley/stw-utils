@@ -2,22 +2,22 @@
 
 (defmacro scase (string &rest tests)
   "case for strings"
-  `(cond  
+  `(cond
      ,@(loop for option in tests
-	  for test = (car option)
-	  for result = (cdr option)
-	  if (eq test 't)
-	  collect `(t ,@(progn result))
-	  else
-	  collect (typecase test
-		    (cons
-		     `((or
-			,@(loop for test% in test
-			     collect `(string= ,string ,test%)))
-		       ,@(progn result)))
-		    (atom
-		     `((string= ,string ,test)
-		       ,@(progn result)))))))
+	           for test = (car option)
+	           for result = (cdr option)
+	           if (eq test 't)
+	             collect `(t ,@(progn result))
+	           else
+	             collect (typecase test
+		                     (cons
+		                      `((or
+			                       ,@(loop for test% in test
+			                               collect `(string= ,string ,test%)))
+		                        ,@(progn result)))
+		                     (atom
+		                      `((string= ,string ,test)
+		                        ,@(progn result)))))))
 
 
 (defmacro awhen (condition &body body)
@@ -37,16 +37,16 @@ and available for capture."
   "Anaphoric macro: while condition is true the result of
 condition is bound to self, and available for capture."
   `(loop
-      with self = nil
-      while (setf self ,condition)
-      do (progn
-	   ,@body)))
+     with self = nil
+     while (setf self ,condition)
+     do (progn
+	        ,@body)))
 
 (defmacro with-gensyms ((&rest bindings) &body body)
   `(let (,@(loop for binding in bindings
-	      if (consp binding)
-	      collect `(,(car binding) (gensym ,(cadr binding))) else
-	      collect `(,binding (gensym))))
+	               if (consp binding)
+	                 collect `(,(car binding) (gensym ,(cadr binding))) else
+	               collect `(,binding (gensym))))
      ,@body))
 
 

@@ -6,8 +6,8 @@
 ensure that directory-name references a directory. As such the 
 trailing slash is required or the namestring/pathname will be truncated." 
   (directory (make-pathname :name name :type type :directory (pathname-directory directory-name))
-	     :resolve-symlinks resolve-symlinks))
-  
+	           :resolve-symlinks resolve-symlinks))
+
 (defun directoryp (designator)
   (unless (pathname-name designator)
     t))
@@ -15,6 +15,7 @@ trailing slash is required or the namestring/pathname will be truncated."
 (defun file-p (designator)
   (when (pathname-name designator)
     t))
+
 
 (defun walk-directory (fn directory-name &optional recursive (ignore-directories '(".git")))
   (let (acc)
@@ -37,56 +38,56 @@ REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
   (walk-directory
    #'(lambda (file)
        (when (file-p file)
-	 (let* ((filename (namestring file))
-		(new-name (find-and-replace filename replacement-list)))
-	   (unless (equal new-name filename)
-	     (rename-file filename new-name)))))
+	       (let* ((filename (namestring file))
+		            (new-name (find-and-replace filename replacement-list)))
+	         (unless (equal new-name filename)
+	           (rename-file filename new-name)))))
    directory-name
    recursive))
 
 
-(declaim (inline parse-stream))
-
-(defun parse-stream (in out)
+(defun parse-stream (in)
   (let ((buffer (make-array 4096 :element-type (stream-element-type in))))
-    (loop
-      for pos = (read-sequence buffer in)
-      while (plusp pos)
-      do (write-sequence buffer out :end pos))))
+    (with-output-to-string (out)
+      (loop
+	      for pos = (read-sequence buffer in)
+	      while (plusp pos)
+	      do (write-sequence buffer out :end pos)))))
 
 
-(defun sequence-from-file (file &optional (if-does-not-exist :error))
+
+(defun sequence-from-file (file &optional (fn #'parse-stream) (if-does-not-exist :error))
   "Retrieve contents of file and return sequence."
   (handler-bind ((sb-int:stream-decoding-error #'(lambda (c)
-						   (declare (ignore c))
-						   #+sbcl(invoke-restart 'sb-int:attempt-resync))))
-    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1) 
+						                                       (declare (ignore c))
+						                                       #+sbcl(invoke-restart 'sb-int:attempt-resync))))
+    (with-open-file (in file :direction :input :if-does-not-exist if-does-not-exist);; :external-format :iso-8859-1)
       (when in
-	(with-output-to-string (out)
-	  (parse-stream in out))))))
+	      (funcall fn in)))))
+
 
 
 (defun file-exists-p (file if-exists if-does-not-exist)
   (typecase file
     (pathname (case if-exists
-		(:supersede
-		 (print (format nil "replacing file: ~a" file)))
-		(:append
-		 (print (format nil "appending to file: ~a" file)))
-		(:overwrite
-		 (print (format nil "overwriting file: ~a" file)))))
+		            (:supersede
+		             (print (format nil "replacing file: ~a" file)))
+		            (:append
+		             (print (format nil "appending to file: ~a" file)))
+		            (:overwrite
+		             (print (format nil "overwriting file: ~a" file)))))
     (t (when (eq if-does-not-exist :create)
-	 (print (format nil "creating file: ~a" file))))))
+	       (print (format nil "creating file: ~a" file))))))
 
 
 (defun sequence-to-file (file sequence
-			 &optional (if-exists :supersede) (if-does-not-exist :create) (element-type 'character) verbose)
+			                   &optional (if-exists :supersede) (if-does-not-exist :create) (element-type 'character) verbose)
   "Write sequence to file. Defaults to overwrite existing content."
   (let ((file-existsp (probe-file file)))
     (with-open-file (out (ensure-directories-exist file :verbose t)
-			 :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist) 
+			                   :direction :output :if-exists if-exists :if-does-not-exist if-does-not-exist)
       (when verbose
-	(file-exists-p file if-exists if-does-not-exist))
+	      (file-exists-p file if-exists if-does-not-exist))
       (write-sequence sequence out))
     (values)))
 
@@ -105,56 +106,56 @@ walks directory, invoking FIND-IN-FILE.
 Returns the file name where results are found, along with their
 indexed location."
   (flet ((walk (file)
-	   (handler-bind ((error #'(lambda (c)
-				     (declare (ignore c))
-				     (invoke-restart 'skip-non-parsing-file))))
-	     (let ((file-name (pathname-name file)))
-	       (unless (or (and (char= (char file-name 0) #\.)
-				(char= (char file-name 1) #\#))
-			   (char= (char file-name 0) #\#))
-		 (awhen (find-in-file file args)
-		   (list file self)))))))
+	         (handler-bind ((error #'(lambda (c)
+				                             (declare (ignore c))
+				                             (invoke-restart 'skip-non-parsing-file))))
+	           (let ((file-name (pathname-name file)))
+	             (unless (or (and (char= (char file-name 0) #\.)
+				                        (char= (char file-name 1) #\#))
+			                     (char= (char file-name 0) #\#))
+		             (awhen (find-in-file file args)
+		               (list file self)))))))
     (walk-directory
      (lambda (file)
        (cond ((and file-type (string-equal (pathname-type file) file-type))
-	      (walk file))
-	     (file-type
-	      nil)
-	     ((and exclude-files
-		   (member (pathname-type file) exclude-files :test #'string-equal))
-	      nil)
-	     (t
-	      (walk file))))
+	            (walk file))
+	           (file-type
+	            nil)
+	           ((and exclude-files
+		               (member (pathname-type file) exclude-files :test #'string-equal))
+	            nil)
+	           (t
+	            (walk file))))
      directory
      t)))
 
 
 (defun find-in-file (file &rest args)
   "Find location of all instances of character, string tokens,
-or functions in FILE. 
+or functions in FILE.
 
-Any function calls must accept a seq and index, 
+Any function calls must accept a seq and index,
 (type fixnum), as arguments, and return a list of matching index
-and (+ index (length index)), or nil. E.g. Matching \"abc\" in 
-\"abcdefgabc\" returns a list of '((0 3) (7 10)) 
+and (+ index (length index)), or nil. E.g. Matching \"abc\" in
+\"abcdefgabc\" returns a list of '((0 3) (7 10))
 while #\e returns (4 5)."
-  (restart-case 
-      (awhen (sequence-from-file file nil)
-	(apply #'find-all self args))
+  (restart-case
+      (awhen (sequence-from-file file)
+	      (apply #'find-all self args))
     (skip-non-parsing-file () nil)))
 
 
 
 
 (defun alter-file-contents (file replacement-list &optional verbose)
-  "Change the file contents of FILE. REPLACEMENT-LIST 
+  "Change the file contents of FILE. REPLACEMENT-LIST
 is an alist of (<to-find> . <replace-with>) pairs."
   (let ((content (sequence-from-file file)))
     (multiple-value-bind (sequence replaced)
-	(find-and-replace content replacement-list)
+	      (find-and-replace content replacement-list)
       (when verbose
-	(loop for (item . replacement) in replaced
-	   do (print (format nil "'~a' replaced with '~a' in file '~a'" item replacement file))))
+	      (loop for (item . replacement) in replaced
+	            do (print (format nil "'~a' replaced with '~a' in file '~a'" item replacement file))))
       (sequence-to-file file sequence))))
 
 
@@ -162,16 +163,17 @@ is an alist of (<to-find> . <replace-with>) pairs."
   "Change the contents of all files in DIRECTORY. REPLACEMENT-LIST 
 is an alist of (<to-find> . <replace-with>) pairs. 
 Files can be constrained to a type by adding an optional file-type arg."
-  (walk-directory #'(lambda (designator)
-		      (when (or (and (file-p designator) (null file-type))
-				(and file-type (string-equal (pathname-type designator) file-type)))
-			(let ((file-name (pathname-name designator)))
-			  (unless (or (and (char= (char file-name 0) #\.)
-					   (char= (char file-name 1) #\#))
-				      (char= (char file-name 0) #\#))
-			    (alter-file-contents designator replacement-list verbose)))))
-		  directory
-		  t))
+  (walk-directory
+   #'(lambda (designator)
+       (when (or (and (file-p designator) (null file-type))
+                 (and file-type (string-equal (pathname-type designator) file-type)))
+         (let ((file-name (pathname-name designator)))
+           (unless (or (and (char= (char file-name 0) #\.)
+                            (char= (char file-name 1) #\#))
+                       (char= (char file-name 0) #\#))
+             (alter-file-contents designator replacement-list verbose)))))
+   directory
+   t))
 
 
 (defun unique-line-register (input-stream)
@@ -179,9 +181,9 @@ Files can be constrained to a type by adding an optional file-type arg."
 is a key."
   (let ((table (make-hash-table :test #'equal)))
     (loop for line = (read-line input-stream nil)
-       while line
-       unless (nth-value 1 (gethash line table))
-       do (setf (gethash line table) nil))
+          while line
+          unless (nth-value 1 (gethash line table))
+            do (setf (gethash line table) nil))
     table))
 
 
@@ -189,15 +191,15 @@ is a key."
   "Takes hash-table and writes each key to output-stream.
 Returns output-stream"
   (maphash #'(lambda (key value)
-	       (declare (ignore value))
-	       (write-line key output-stream))
-	   table))
+	             (declare (ignore value))
+	             (write-line key output-stream))
+	         table))
 
 
 (defun remove-duplicate-lines-from-file (file)
   "Remove duplicate lines from file"
   (let ((table (with-open-file (input file)
-		 (unique-line-register input))))
+		             (unique-line-register input))))
     (with-open-file (output file :direction :output :if-exists :supersede)
       (hash-keys-to-output-stream table output))))
 
@@ -205,29 +207,29 @@ Returns output-stream"
 (defun remove-duplicate-lines-from-string (seq)
   "Remove duplicate lines from string"
   (let ((table (with-input-from-string (stream seq)
-		 (unique-line-register stream)))
-	(stream (make-string-output-stream)))
+		             (unique-line-register stream)))
+	      (stream (make-string-output-stream)))
     (hash-keys-to-output-stream table stream)
     (get-output-stream-string stream)))
-	  
-      
+
+
 (defun concatenate-files% (&rest files)
   (apply #'concatenate 'string
-	 (loop for file in files
-	    collect (sequence-from-file file))))
+	       (loop for file in files
+	             collect (sequence-from-file file))))
 
 (defun concatenate-files (directory &optional file-type)
   "Walk directory and concatenate files (of optional type - string)."
   (apply #'concatenate-files%
-	 (walk-directory #'(lambda (designator) 
-			     (cond ((and file-type
-					 (file-p designator)
-					 (string-equal (pathname-type designator) file-type))
-				    designator)
-				   ((file-p designator)
-				    (unless file-type
-				      designator))))
-			 directory t)))
+	       (walk-directory #'(lambda (designator)
+			                       (cond ((and file-type
+					                               (file-p designator)
+					                               (string-equal (pathname-type designator) file-type))
+				                            designator)
+				                           ((file-p designator)
+				                            (unless file-type
+				                              designator))))
+			                   directory t)))
 
 (defun concatenate-and-remove-duplicates (directory &optional file-type)
   "Walk directory, concatenate files (of optional type - string) and remove duplicates"
@@ -235,12 +237,12 @@ Returns output-stream"
 
 
 (defun concatenate-pathname-directories (&rest pathnames)
-  "Accepts pathnames or strings. Returns a pathname of concatenated strings. 
-Assumes that all pathnames are directories, irrespective of the presence of 
+  "Accepts pathnames or strings. Returns a pathname of concatenated strings.
+Assumes that all pathnames are directories, irrespective of the presence of
 the leading/trailing #\/ character."
   (let ((directories (loop for pathname in pathnames
-			   when (or (pathnamep pathname)
-				    (stringp pathname))
-			     append (explode-string (namestring pathname) #\/ :remove-separators t))))
+			                     when (or (pathnamep pathname)
+				                            (stringp pathname))
+			                       append (explode-string (namestring pathname) #\/ :remove-separators t))))
     (when directories
       (make-pathname :directory (push :absolute directories)))))

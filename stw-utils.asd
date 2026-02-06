@@ -1,7 +1,7 @@
 (defsystem #:stw-utils
   :description "A basic utility library."
   :serial t
-  :depends-on ("babel")
+  :depends-on ("babel" "iterate")
   :components ((:file "packages")
 	       (:file "macro-functions")
 	       (:file "hashtable-functions")

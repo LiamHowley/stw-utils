@@ -224,8 +224,8 @@ list and maintains its order."
 (defun array-to-list (array)
   (map 'list
        #'(lambda (item)
-	   (typecase item
-	     ((array cons)
-	      (array-to-list item))
-	     (t item)))
+           (typecase item
+             ((array cons)
+              (array-to-list item))
+             (t item)))
        array))
