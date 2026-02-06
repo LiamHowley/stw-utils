@@ -17,28 +17,24 @@ trailing slash is required or the namestring/pathname will be truncated."
     t))
 
 (defun walk-directory (fn directory-name &optional recursive (ignore-directories '(".git")))
-  (labels ((walk (name acc)
-	     (cond ((null name)
-		    acc)
-		   ((consp name)
-		    (walk (cdr name) (walk (car name) acc)))
-		   ((and recursive (directoryp name))
-		    (let ((directory-name (car (last (pathname-directory name)))))
-		      (if (member directory-name ignore-directories :test #'string=)
-			  acc
-			  (walk (list-files name) acc))))
-		   ((file-p name)
-		    (aif (funcall fn name)
-			 (cons self acc)
-			 acc)))))
-    (nreverse
-     (walk (list-files directory-name) nil))))
+  (let (acc)
+    (labels ((walk (list)
+	             (loop for file in list
+		                 do (cond ((and recursive (directoryp file))
+			                         (let ((directory-name (car (last (pathname-directory file)))))
+				                         (unless (member directory-name ignore-directories :test #'string=)
+				                           (walk (list-files file)))))
+			                        ((file-p file)
+			                         (awhen (funcall fn file)
+				                         (push self acc)))))))
+      (walk (list-files directory-name))
+      (nreverse acc))))
 
 
 (defun rename-files (directory-name replacement-list &optional recursive)
   "Change the file name of all files in DIRECTORY-NAME.
 REPLACEMENT-LIST is an alist of (<to-find> . <replace-with>) pairs."
-  (walk-directory 
+  (walk-directory
    #'(lambda (file)
        (when (file-p file)
 	 (let* ((filename (namestring file))
