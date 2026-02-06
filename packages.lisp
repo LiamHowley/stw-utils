@@ -8,6 +8,10 @@
    :awhen
    :self
    :with-gensyms))
+   :iterate-extend
+   :for=
+   :collect-into
+   :collect-all
 
 
 (defpackage util.binary

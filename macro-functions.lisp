@@ -48,3 +48,25 @@ condition is bound to self, and available for capture."
 	      collect `(,(car binding) (gensym ,(cadr binding))) else
 	      collect `(,binding (gensym))))
      ,@body))
+
+
+(defmacro iterate-extend (&body body)
+  "Extends the macro iterate. Expands the macrolet FOR= into
+(for <var> = <value>) expressions; the macrolet COLLECT-INTO into
+(collect <value> into <list>) expressions; and the macrolet
+COLLECT-ALL into (collect <value>) expressions."
+  (with-gensyms (rest a b)
+    `(macrolet ((for= (&rest ,rest)
+                  `(progn
+                     ,@(iter:iterate (iter:for (,a ,b) on ,rest by #'cddr)
+                         (iter:collect `(iter:for ,,a = ,,b)))))
+                (collect-into (&rest ,rest)
+                  `(progn
+                     ,@(iter:iterate (iter:for (,a ,b) on ,rest by #'cddr)
+                         (iter:collect `(iter:collect ,,a into ,,b)))))
+                (collect-all (&rest ,rest)
+                  `(progn
+                     ,@(iter:iterate (iter:for ,a in ,rest)
+                         (iter:collect `(iter:collect ,,a))))))
+       (iter:iterate
+         ,@body))))
